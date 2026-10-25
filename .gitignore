@@ -1,0 +1,18 @@
+# Configuration locale et secrets
+.env
+.env.*
+!.env.example
+
+# Dépendances réinstallées avec npm et Composer
+node_modules/
+vendor/
+
+# Fichiers générés
+frontend/dist/
+backend/var/
+coverage/
+.phpunit.cache/
+.phpunit.result.cache
+
+# Fichiers macOS
+.DS_Store
