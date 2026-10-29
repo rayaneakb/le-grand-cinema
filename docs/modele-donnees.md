@@ -106,7 +106,7 @@ La durée d'un film est un nombre entier de minutes strictement positif. Les act
 
 Un siège appartient à une seule salle. Le couple rangée et numéro est unique dans cette salle. La capacité est calculée en comptant les sièges, pour éviter un écart entre une capacité saisie et le plan de salle.
 
-Une séance concerne un film et une salle. Son heure de fin est calculée à sa création à partir de la durée du film et conservée. Une correction ultérieure de la fiche du film ne déplace donc pas automatiquement les créneaux existants.
+Une séance concerne un film et une salle. Son heure de fin est calculée à partir de la durée du film et conservée. Si cette durée change, Symfony recalcule la fin des séances à venir non annulées et vérifie que l'heure de marge reste respectée. Si un conflit apparaît, la modification est refusée. Sinon, la durée et les heures de fin concernées sont mises à jour dans une même transaction. Les séances passées conservent leurs horaires.
 
 Les dates sont enregistrées en UTC et affichées à l'heure de Paris. Symfony vérifiera les chevauchements et l'heure de marge entre la fin d'une séance et le début de la suivante dans une même salle. Deux changements simultanés du planning devront aussi respecter cette règle.
 
