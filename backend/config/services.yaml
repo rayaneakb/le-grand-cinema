@@ -21,3 +21,9 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@prod:
+    services:
+        Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
+            factory: ['App\Service\SessionHandlerFactory', 'create']
+            arguments: ['@doctrine.dbal.default_connection']

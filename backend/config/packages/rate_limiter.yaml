@@ -1,0 +1,10 @@
+framework:
+    rate_limiter:
+        email_verification:
+            policy: fixed_window
+            limit: 1
+            interval: '1 minute'
+        password_reset:
+            policy: fixed_window
+            limit: 1
+            interval: '1 minute'
