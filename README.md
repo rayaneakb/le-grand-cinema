@@ -125,6 +125,7 @@ Ajouter les variables dans Render, sans les enregistrer dans le dépôt.
 | APP_ENV | prod |
 | APP_DEBUG | 0 |
 | APP_SECRET | Secret généré dans Render |
+| DEFAULT_URI | Adresse publique HTTPS du service Render |
 | DATABASE_URL | URL de connexion directe fournie par Neon |
 | LOAD_DEMO_DATA | 1 pour charger la démonstration sur une base vide |
 
@@ -135,3 +136,30 @@ Au démarrage, le conteneur applique les migrations et prépare le cache Symfony
 La route `/api/status` renvoie `200` si Symfony peut interroger PostgreSQL et `503` si la connexion échoue. Elle ne renvoie aucun détail de connexion.
 
 Après le déploiement, vérifier l’accueil, les affiches, `/api/films` et `/api/status`. Les instances gratuites peuvent se mettre en veille et nécessiter un temps de réveil. Les données restent dans Neon, indépendamment du conteneur Render.
+
+## Envoi des mails
+
+Symfony Mailer utilise l’API HTTPS de Brevo. Définir ces variables dans `backend/.env.local` pour les essais et dans Render avant de déployer l’inscription.
+
+```dotenv
+MAILER_DSN="brevo+api://CLE_API_BREVO@default"
+MAILER_FROM="Le Grand Cinéma <le.grand.cinema.contact@gmail.com>"
+```
+
+La clé doit autoriser les emails transactionnels. Elle ne doit pas être placée dans le frontend ni enregistrée dans Git. Encoder les caractères réservés de la clé si nécessaire pour le format URL du DSN.
+
+Les tests automatisés utilisent `null://null` et n’envoient aucun mail réel. Pour envoyer un mail réel de vérification de la connexion, depuis `backend` :
+
+```bash
+php bin/console mailer:test destinataire@example.com --from="Le Grand Cinéma <le.grand.cinema.contact@gmail.com>"
+```
+
+Les liens d’activation utilisent `DEFAULT_URI`. En local, utiliser `http://127.0.0.1:5173` pour ouvrir l’écran React d’activation, avec les deux serveurs démarrés sur le même ordinateur. Sur Render, elle correspond à l’adresse publique HTTPS du service. L’expéditeur Gmail vérifié peut être remplacé par un domaine `brevosend.com` lors de l’envoi par Brevo.
+
+## Comptes et connexion
+
+Les pages `/inscription`, `/activation`, `/connexion` et `/compte` sont servies par React. Les routes d’API associées sont détaillées dans `docs/api.md`. La récupération du mot de passe est accessible sur `/mot-de-passe-oublie` et `/reinitialiser-mot-de-passe`. L’historique des réservations reste à développer.
+
+La migration `Version20261031160000` crée la table technique `sessions`, utilisée par Symfony en production. Les sessions passent par une connexion PDO distincte, avec les mêmes paramètres PostgreSQL et SSL que Doctrine. Cette table est exclue des comparaisons du modèle ORM, car elle ne représente pas une entité métier.
+
+Sur Render, les cookies de session nécessitent HTTPS. La configuration de production tient compte des en-têtes du proxy pour le protocole et l’adresse IP. Elle est prévue pour un conteneur accessible par le proxy Render.

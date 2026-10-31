@@ -1,12 +1,21 @@
-# see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
+    csrf_protection: true
+    session:
+        name: cinema_session
+        cookie_httponly: true
+        cookie_samesite: lax
+        cookie_secure: auto
+        cookie_lifetime: 0
+        gc_maxlifetime: 1800
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
-
-    #esi: true
-    #fragments: true
+when@prod:
+    framework:
+        trusted_proxies: 'REMOTE_ADDR,private_ranges'
+        trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']
+        session:
+            cookie_secure: true
+            handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
 
 when@test:
     framework:
