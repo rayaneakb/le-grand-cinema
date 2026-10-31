@@ -22,6 +22,12 @@ class Reservation
     #[ORM\Column(length: 32, unique: true)]
     private ?string $reference = null;
 
+    #[ORM\Column(length: 64, unique: true, nullable: true)]
+    private ?string $confirmationKey = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $requestFingerprint = null;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Screening $screening = null;

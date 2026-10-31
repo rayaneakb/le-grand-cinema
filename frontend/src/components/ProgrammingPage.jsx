@@ -37,7 +37,6 @@ export default function ProgrammingPage() {
   }, [retry])
 
   const [dayOffset, setDayOffset] = useState(0)
-  const [selection, setSelection] = useState(null)
   const [today] = useState(() => new Date())
   const days = Array.from({ length: 5 }, (_, offset) => {
     const date = new Date(today)
@@ -72,8 +71,7 @@ export default function ProgrammingPage() {
         </p>
       </section>
       <div className="demo-notice" role="note">
-        Programmation de démonstration. La réservation n’est pas encore
-        disponible.
+        Réservez vos sièges en ligne. Le paiement s’effectue au cinéma.
       </div>
       <section aria-label="Programmation des films">
         <div className="programme-heading">
@@ -96,29 +94,12 @@ export default function ProgrammingPage() {
               aria-pressed={dayOffset === day.offset}
               onClick={() => {
                 setDayOffset(day.offset)
-                setSelection(null)
               }}
             >
               {day.label}
             </button>
           ))}
         </div>
-        {selection && (
-          <div className="selection" role="status">
-            <strong>{selection.film.title}</strong> —{' '}
-            {new Date(selection.screening.startsAt).toLocaleTimeString(
-              'fr-FR',
-              {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Europe/Paris',
-              },
-            )}
-            , {selection.screening.room}.<br />
-            Séance sélectionnée pour cet aperçu. La sélection des sièges sera
-            ajoutée à la prochaine étape.
-          </div>
-        )}
         {loading && <p role="status">Chargement de la programmation…</p>}
         {error && (
           <div role="alert" className="error-state">
@@ -142,7 +123,7 @@ export default function ProgrammingPage() {
                   film={film}
                   dateKey={days[dayOffset].dateKey}
                   onSelectScreening={(film, screening) =>
-                    setSelection({ film, screening })
+                    window.location.assign(`/seances/${screening.id}/sieges`)
                   }
                 />
               ))

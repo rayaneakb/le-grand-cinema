@@ -157,3 +157,57 @@ Le mail contient un lien signé vers `/reinitialiser-mot-de-passe`, valable une 
 Le changement renvoie `200` et `{"status":"password_changed","message":"Votre mot de passe est modifié. Connectez-vous avec le nouveau."}`. Il n’ouvre pas de session. Les sessions existantes sont refusées lors de leur prochaine requête à Symfony, car l’empreinte du mot de passe a changé.
 
 Une mise à jour SQL conditionnée par l’ancienne empreinte empêche deux utilisations concurrentes du lien. Après le changement, tous les liens de réinitialisation précédents deviennent invalides. Demander un autre mail ne révoque pas un lien encore valable tant que le mot de passe reste inchangé.
+
+## Plan de salle
+
+`GET /api/screenings/{id}/seats` est accessible sans compte. La réponse contient la séance (film, horaire UTC et salle), le tarif actuel en centimes et les sièges de cette salle. Chaque siège possède un identifiant, une rangée, un numéro et une disponibilité.
+
+Un siège est indisponible si une place non libérée existe pour cette séance. Les réservations des autres séances ne l’occupent pas. Aucune coordonnée client n’est transmise et la réponse n’est pas mise en cache.
+
+- `200` pour le plan, y compris une séance complète.
+- `404` pour une séance inconnue ou un film retiré de l’affiche.
+- `410` pour une séance annulée ou déjà commencée.
+- `503` si le tarif n’est pas configuré.
+
+La sélection dans React ne bloque pas les sièges. Le total affiché est un aperçu au tarif fourni par Symfony. La confirmation revérifie les disponibilités dans une transaction.
+
+## Confirmer une réservation
+
+`POST /api/reservations` est accessible avec ou sans compte. Le navigateur demande d’abord un jeton à `GET /api/csrf`, puis le transmet dans l’en-tête `X-CSRF-Token` avec le cookie de session.
+
+Exemple de corps JSON
+
+```json
+{
+  "screeningId": 17,
+  "seatIds": [101, 102],
+  "firstName": "Camille",
+  "lastName": "Martin",
+  "email": "camille@example.com",
+  "expectedUnitPriceCents": 1000,
+  "confirmationKey": "c01b3fe3-43cc-4a59-8000-123456789abc"
+}
+```
+
+Les identifiants de sièges viennent du plan de la séance. `expectedUnitPriceCents` correspond au tarif affiché dans le récapitulatif. Symfony lit le tarif en base et calcule le total. Un changement de tarif renvoie `409 price_changed` avec le nouveau tarif, sans créer de réservation. Le client doit confirmer à nouveau.
+
+`confirmationKey` est une valeur aléatoire créée par le navigateur pour cette demande. Le serveur la lie à la session et conserve une empreinte des données. Une nouvelle tentative identique retrouve la même réservation, même si la première réponse a été perdue. Cette clé ne donne pas accès à une réservation depuis une autre session.
+
+La séance est verrouillée pendant la transaction. Si un siège est occupé, aucun siège de la demande n’est enregistré. L’index unique des places actives empêche également les doublons. Une place d’une autre salle est refusée.
+
+- `201` pour une nouvelle réservation confirmée.
+- `200` pour une nouvelle tentative identique déjà enregistrée, avec `replayed: true`.
+- `400` ou `415` pour un corps ou un format incorrect.
+- `403` pour un jeton CSRF invalide.
+- `404` pour une séance inconnue.
+- `409 seats_unavailable` si un siège est pris, avec `unavailableSeatIds`.
+- `409 price_changed` pour un tarif modifié. Une clé réutilisée avec d’autres données est également refusée en `409`.
+- `410` pour une séance annulée, commencée ou retirée de l’affiche.
+- `422` pour des données invalides.
+- `503` si le tarif n’est pas configuré.
+
+La réponse confirmée contient la référence, les coordonnées fournies, le film, la salle, l’horaire, les sièges, le prix unitaire et le total enregistrés. Elle n’est pas mise en cache. La réservation est rattachée au compte connecté uniquement si son adresse vérifiée correspond à l’adresse de contact.
+
+Le brouillon avant connexion reste temporairement dans l’onglet. Après confirmation, il est supprimé. Une réponse réseau incertaine conserve la clé et propose de vérifier le résultat sans changer les coordonnées ni les places. Les sièges encore libres restent sélectionnés après un conflit.
+
+Les mails de réservation, le PDF et l’annulation ne sont pas encore disponibles.

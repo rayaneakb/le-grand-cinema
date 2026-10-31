@@ -225,7 +225,11 @@ test('le menu visiteur est accessible au clavier et se ferme avec Échap', async
   const programme = page.getByRole('link', { name: 'À l’affiche', exact: true })
   const linkBox = await programme.boundingBox()
   const buttonBox = await button.boundingBox()
-  expect(Math.abs(linkBox.y + linkBox.height / 2 - buttonBox.y - buttonBox.height / 2)).toBeLessThan(2)
+  expect(
+    Math.abs(
+      linkBox.y + linkBox.height / 2 - buttonBox.y - buttonBox.height / 2,
+    ),
+  ).toBeLessThan(2)
   await programme.click()
   await expect(page).toHaveURL(/\/$/)
   await expect(button).toBeInViewport()
@@ -281,4 +285,16 @@ test('le menu se ferme au clic extérieur et ne déborde pas sur téléphone', a
   })
   await page.getByRole('heading', { name: 'Se connecter' }).click()
   await expect(button).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('une adresse de retour extérieure est refusée après connexion', async ({
+  page,
+}) => {
+  await page.route('**/api/login', (route) =>
+    route.fulfill({ json: { status: 'authenticated' } }),
+  )
+  await page.goto('/connexion?retour=https%3A%2F%2Fexample.com')
+  await fillLogin(page)
+  await page.getByRole('button', { name: 'Me connecter', exact: true }).click()
+  await expect(page).toHaveURL(/\/compte$/)
 })

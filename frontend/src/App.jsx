@@ -1,3 +1,4 @@
+import SeatSelectionPage from './components/SeatSelectionPage'
 import ForgotPasswordPage from './components/ForgotPasswordPage'
 import ResetPasswordPage from './components/ResetPasswordPage'
 import AccountMenu from './components/AccountMenu'
@@ -13,8 +14,10 @@ import './Account.css'
 export default function App() {
   const session = useSession()
   const path = window.location.pathname
-  const page =
-    path === '/inscription'
+  const screeningMatch = path.match(/^\/seances\/([1-9][0-9]{0,9})\/sieges$/)
+  const page = screeningMatch
+    ? 'seats'
+    : path === '/inscription'
       ? 'registration'
       : path === '/activation'
         ? 'activation'
@@ -52,7 +55,12 @@ export default function App() {
           <AccountMenu session={session} />
         </nav>
       </header>
-      {page === 'registration' ? (
+      {page === 'seats' ? (
+        <SeatSelectionPage
+          screeningId={screeningMatch[1]}
+          user={session.user}
+        />
+      ) : page === 'registration' ? (
         <RegistrationPage />
       ) : page === 'activation' ? (
         <ActivationPage />
