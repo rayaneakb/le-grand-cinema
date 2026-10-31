@@ -106,7 +106,8 @@
   font-size: 20px;
 }
 .account-back {
-  display: inline-block;
+  display: block;
+  width: fit-content;
   margin-top: 24px;
   color: #28544c;
   text-underline-offset: 4px;
