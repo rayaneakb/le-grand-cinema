@@ -6,10 +6,7 @@ use App\Repository\SeatRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SeatRepository::class)]
-#[ORM\UniqueConstraint(
-    name: 'uniq_seat_room_row_number',
-    fields: ['room', 'rowLabel', 'number']
-)]
+#[ORM\UniqueConstraint(name: 'uniq_seat_room_row_number', fields: ['room', 'rowLabel', 'number'])]
 class Seat
 {
     #[ORM\Id]
