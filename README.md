@@ -57,7 +57,7 @@ npm run dev -- --host 127.0.0.1
 
 Ouvrir `http://127.0.0.1:5173`. Vite transmet les requêtes `/api` et les affiches `/demo` au serveur PHP sur le port `8000`. Les deux terminaux doivent rester ouverts pendant l’utilisation locale.
 
-`npm run build` prépare les fichiers du frontend pour le déploiement. Le déploiement n’est pas encore configuré.
+`npm run build` prépare les fichiers du frontend pour le déploiement.
 
 # Vérifications
 
@@ -99,3 +99,39 @@ Les tests actuels de l’interface simulent les réponses de l’API. Ils couvre
 
 - [Modèle de données](docs/modele-donnees.md)
 - [API de programmation](docs/api.md)
+
+# Déploiement sur Render
+
+Le Dockerfile compile React, puis installe Symfony dans une image PHP 8.4 avec Apache. Apache sert l’interface et transmet les routes `/api` à Symfony sous la même adresse.
+
+Créer un Web Service lié au dépôt GitHub avec ces paramètres.
+
+| Paramètre | Valeur |
+| --- | --- |
+| Language | Docker |
+| Branch | develop pour la démonstration |
+| Region | Frankfurt |
+| Root Directory | Vide |
+| Dockerfile Path | ./Dockerfile |
+| Docker Command | Vide, le Dockerfile définit le démarrage |
+| Compute | Free |
+| Health Check Path | /api/status |
+| Auto-Deploy | Off pour le premier déploiement manuel |
+
+Ajouter les variables dans Render, sans les enregistrer dans le dépôt.
+
+| Variable | Valeur |
+| --- | --- |
+| APP_ENV | prod |
+| APP_DEBUG | 0 |
+| APP_SECRET | Secret généré dans Render |
+| DATABASE_URL | URL de connexion directe fournie par Neon |
+| LOAD_DEMO_DATA | 1 pour charger la démonstration sur une base vide |
+
+Le projet Neon utilise PostgreSQL 18. Ajouter `serverVersion=18&charset=utf8` aux paramètres de son URL, en conservant `sslmode=require` et les autres paramètres fournis. La configuration PostgreSQL 17 du développement local reste dans `.env.local`.
+
+Au démarrage, le conteneur applique les migrations et prépare le cache Symfony. Avec `LOAD_DEMO_DATA=1`, il tente aussi de charger les données fictives. La commande conserve les données déjà présentes et ne décale pas leurs dates. Remettre cette variable à `0` après le premier chargement.
+
+La route `/api/status` renvoie `200` si Symfony peut interroger PostgreSQL et `503` si la connexion échoue. Elle ne renvoie aucun détail de connexion.
+
+Après le déploiement, vérifier l’accueil, les affiches, `/api/films` et `/api/status`. Les instances gratuites peuvent se mettre en veille et nécessiter un temps de réveil. Les données restent dans Neon, indépendamment du conteneur Render.
