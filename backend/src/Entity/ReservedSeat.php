@@ -43,27 +43,36 @@ class ReservedSeat
         }
 
         $reservationScreening = $this->reservation->getScreening();
-        if ($reservationScreening === null || !$this->sameScreening($reservationScreening, $this->screening)) {
-            throw new \DomainException('La place doit concerner la même séance que la réservation.');
+        if (
+            $reservationScreening === null ||
+            !$this->sameScreening($reservationScreening, $this->screening)
+        ) {
+            throw new \DomainException(
+                'La place doit concerner la même séance que la réservation.'
+            );
         }
 
         $seatRoom = $this->seat->getRoom();
         $screeningRoom = $this->screening->getRoom();
-        if ($seatRoom === null || $screeningRoom === null || !$this->sameRoom($seatRoom, $screeningRoom)) {
+        if (
+            $seatRoom === null ||
+            $screeningRoom === null ||
+            !$this->sameRoom($seatRoom, $screeningRoom)
+        ) {
             throw new \DomainException('Le siège ne correspond pas à la salle de cette séance.');
         }
     }
 
     private function sameScreening(Screening $first, Screening $second): bool
     {
-        return $first === $second
-            || ($first->getId() !== null && $first->getId() === $second->getId());
+        return $first === $second ||
+            ($first->getId() !== null && $first->getId() === $second->getId());
     }
 
     private function sameRoom(Room $first, Room $second): bool
     {
-        return $first === $second
-            || ($first->getId() !== null && $first->getId() === $second->getId());
+        return $first === $second ||
+            ($first->getId() !== null && $first->getId() === $second->getId());
     }
 
     public function getId(): ?int
