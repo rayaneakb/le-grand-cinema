@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Exception\ReservationProblem;
 use App\Service\ReservationService;
+use App\Service\ReservationAccess;
+use App\Service\ReservationConfirmationMailer;
 use App\Validator\ReservationValidator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +23,8 @@ class ReservationController
         Request $request,
         ReservationValidator $validator,
         ReservationService $reservations,
+        ReservationConfirmationMailer $confirmationMailer,
+        ReservationAccess $access,
         CsrfTokenManagerInterface $csrf,
         #[Autowire('%kernel.secret%')] string $secret,
         #[CurrentUser] ?User $user,
@@ -53,7 +57,10 @@ class ReservationController
             return $this->respond(['message' => $problem->getMessage(), ...$problem->details], $problem->getCode());
         }
 
-        return $this->respond(['status' => 'confirmed', ...$result], $result['replayed'] ? 200 : 201);
+        $result['reservation']['managementUrl'] = $access->createUrl($result['reservation']);
+        $mail = $confirmationMailer->send($key, $result['reservation']);
+
+        return $this->respond(['status' => 'confirmed', ...$result, ...$mail], $result['replayed'] ? 200 : 201);
     }
 
     private function respond(array $data, int $status): JsonResponse

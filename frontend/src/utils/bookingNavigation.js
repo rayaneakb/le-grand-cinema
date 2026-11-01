@@ -5,6 +5,7 @@ export function bookingReturnPath(value) {
   if (typeof value !== 'string') return null
   return value === '/' ||
     value === '/compte' ||
+    value === '/admin' ||
     /^\/seances\/[1-9][0-9]{0,9}\/sieges$/.test(value)
     ? value
     : null

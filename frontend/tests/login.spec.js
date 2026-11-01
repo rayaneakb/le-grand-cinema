@@ -14,6 +14,9 @@ const activeSession = {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/account/reservations?*', (route) =>
+    route.fulfill({ json: { reservations: [], page: 1, hasMore: false } }),
+  )
   await page.route('**/api/session', (route) =>
     route.fulfill({ json: { user: null } }),
   )

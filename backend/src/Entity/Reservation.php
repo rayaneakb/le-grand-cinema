@@ -57,6 +57,13 @@ class Reservation
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $confirmationEmailSentAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $confirmationEmailAttemptedAt = null;
+
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));

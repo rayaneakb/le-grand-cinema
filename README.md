@@ -163,3 +163,19 @@ Les pages `/inscription`, `/activation`, `/connexion` et `/compte` sont servies 
 La migration `Version20261031160000` crée la table technique `sessions`, utilisée par Symfony en production. Les sessions passent par une connexion PDO distincte, avec les mêmes paramètres PostgreSQL et SSL que Doctrine. Cette table est exclue des comparaisons du modèle ORM, car elle ne représente pas une entité métier.
 
 Sur Render, les cookies de session nécessitent HTTPS. La configuration de production tient compte des en-têtes du proxy pour le protocole et l’adresse IP. Elle est prévue pour un conteneur accessible par le proxy Render.
+
+
+### Confirmation PDF
+
+Le client peut télécharger sa confirmation depuis le récapitulatif de réservation ou son compte. Les réservations sans compte sont accessibles par le lien personnel reçu par mail. Une réservation annulée ne permet plus de télécharger le PDF.
+
+Dompdf est installé avec Composer. Le conteneur PHP inclut l’extension `mbstring` nécessaire à la génération. Le modèle se trouve dans `backend/templates/pdf/reservation.php` et les coordonnées du cinéma sont définies dans `backend/config/services.yaml`.
+
+
+### Comptes du personnel
+
+Depuis `backend`, lancer `php bin/console app:create-staff`. La commande demande l’adresse mail, le prénom, le nom, le rôle et un mot de passe masqué de 15 à 128 caractères. Elle refuse une adresse déjà utilisée et ne modifie jamais les droits d’un compte existant.
+
+Ces comptes sont provisionnés et validés par l’administrateur du projet ; l’inscription publique crée uniquement des clients. Aucun mot de passe n’est passé dans les arguments de commande ni enregistré en clair. L’employé et la direction se connectent sur la même page que les clients, puis accèdent à « Administration » dans le menu du compte.
+
+L’espace `/admin` permet de rechercher les réservations par référence ou adresse mail. La direction peut également modifier le tarif unique et consulter les statistiques par date de séance. La gestion des films et des séances est la prochaine étape.

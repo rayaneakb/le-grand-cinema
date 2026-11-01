@@ -1,3 +1,4 @@
+import AccountReservations from './AccountReservations'
 import useLogout from '../hooks/useLogout'
 
 export default function AccountPage({ session }) {
@@ -21,6 +22,7 @@ export default function AccountPage({ session }) {
               <dt>Adresse mail</dt>
               <dd>{session.user.email}</dd>
             </dl>
+            <AccountReservations key={session.user.email} />
             <button className="primary-button" onClick={logout} disabled={busy}>
               {busy ? 'Déconnexion en cours…' : 'Me déconnecter'}
             </button>

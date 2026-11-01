@@ -415,6 +415,8 @@ async function openReview(page) {
 function confirmedBooking(reference = 'TEST-RESERVATION') {
   return {
     status: 'confirmed',
+    emailSent: true,
+    emailRetryAfter: 0,
     replayed: false,
     reservation: {
       reference,
@@ -565,4 +567,43 @@ test('un tarif modifié exige une nouvelle confirmation du client', async ({
   await expect(
     page.getByRole('region', { name: 'Réservation confirmée' }),
   ).toContainText('24,00')
+})
+
+test('un échec du mail conserve la confirmation et permet un nouvel envoi sans doublon', async ({
+  page,
+}) => {
+  await page.clock.install()
+  await openReview(page)
+  let requests = 0
+  let key
+  await page.route('**/api/reservations', (route) => {
+    requests++
+    const payload = route.request().postDataJSON()
+    if (requests === 1) {
+      key = payload.confirmationKey
+      return route.fulfill({
+        status: 201,
+        json: { ...confirmedBooking(), emailSent: false, emailRetryAfter: 2 },
+      })
+    }
+    expect(payload.confirmationKey).toBe(key)
+    return route.fulfill({ json: { ...confirmedBooking(), replayed: true } })
+  })
+  await page
+    .getByRole('button', { name: 'Confirmer ma réservation', exact: true })
+    .click()
+  const confirmation = page.getByRole('region', {
+    name: 'Réservation confirmée',
+  })
+  await expect(confirmation).toContainText('TEST-RESERVATION')
+  await expect(confirmation).toContainText('mail n’a pas pu être envoyé')
+  const retry = page.getByRole('button', { name: 'Réessayer l’envoi du mail' })
+  await expect(retry).toBeDisabled()
+  await page.clock.runFor(3000)
+  await expect(retry).toBeEnabled()
+  await retry.click()
+  await expect(confirmation).toContainText(
+    'Un mail de confirmation a été envoyé à elodie@example.com',
+  )
+  expect(requests).toBe(2)
 })

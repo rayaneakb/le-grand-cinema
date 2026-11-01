@@ -5,6 +5,8 @@ namespace App\Tests\Controller;
 use App\Entity\User;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -164,6 +166,65 @@ class ReservationControllerTest extends WebTestCase
         ]);
         self::assertResponseStatusCodeSame(201);
         self::assertNull($this->connection->fetchOne('SELECT user_id FROM reservation WHERE reference = ?', [$second['reservation']['reference']]));
+    }
+
+    public function testConfirmationMailContainsTheSavedBooking(): void
+    {
+        $data = $this->requestData();
+        $response = $this->confirm($data);
+        self::assertResponseStatusCodeSame(201);
+        self::assertTrue($response['emailSent']);
+        self::assertEmailCount(1);
+        $message = self::getMailerMessage();
+        self::assertSame('elodie@example.com', $message->getTo()[0]->getAddress());
+        foreach ([$response['reservation']['reference'], 'Film de test', 'Salle test', 'A1, A2', '21,00 €', 'heure de Paris', 'paiement'] as $part) {
+            self::assertStringContainsString($part, $message->getTextBody());
+        }
+        self::assertStringNotContainsString($data['confirmationKey'], $message->getTextBody());
+        self::assertNotNull($this->connection->fetchOne('SELECT confirmation_email_sent_at FROM reservation WHERE reference = ?', [$response['reservation']['reference']]));
+    }
+
+    public function testSuccessfulMailIsNotSentAgainOnAnIdenticalRequest(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())->method('send');
+        static::getContainer()->set(MailerInterface::class, $mailer);
+        $data = $this->requestData();
+        $first = $this->confirm($data);
+        self::assertTrue($first['emailSent']);
+        $second = $this->confirm($data);
+        self::assertResponseStatusCodeSame(200);
+        self::assertTrue($second['emailSent']);
+        self::assertSame($first['reservation']['reference'], $second['reservation']['reference']);
+    }
+
+    public function testMailFailureKeepsTheBookingAndCanBeRetriedAfterTheDelay(): void
+    {
+        $calls = 0;
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->exactly(2))->method('send')->willReturnCallback(static function () use (&$calls): void {
+            ++$calls;
+            if ($calls === 1) throw new TransportException('Panne simulée');
+        });
+        static::getContainer()->set(MailerInterface::class, $mailer);
+        $data = $this->requestData();
+        $first = $this->confirm($data);
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame('confirmed', $first['status']);
+        self::assertFalse($first['emailSent']);
+        $reference = $first['reservation']['reference'];
+        self::assertNull($this->connection->fetchOne('SELECT confirmation_email_sent_at FROM reservation WHERE reference = ?', [$reference]));
+        self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM reserved_seat WHERE screening_id = ?', [$data['screeningId']]));
+        $early = $this->confirm($data);
+        self::assertFalse($early['emailSent']);
+        self::assertGreaterThan(0, $early['emailRetryAfter']);
+        self::assertSame(1, $calls);
+        $this->connection->update('reservation', ['confirmation_email_attempted_at' => '2000-01-01 00:00:00'], ['reference' => $reference]);
+        $retry = $this->confirm($data);
+        self::assertResponseStatusCodeSame(200);
+        self::assertTrue($retry['emailSent']);
+        self::assertSame($reference, $retry['reservation']['reference']);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM reservation WHERE screening_id = ?', [$data['screeningId']]));
     }
 
     private function insert(string $table, array $data): int

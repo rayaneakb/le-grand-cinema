@@ -1,3 +1,4 @@
+import ReservationPdfButton from './ReservationPdfButton'
 import {
   readBookingDraft,
   saveBookingDraft,
@@ -31,6 +32,8 @@ export default function SeatSelectionPage({ screeningId, user }) {
   }
   const [selectionError, setSelectionError] = useState('')
   const [confirmation, setConfirmation] = useState(null)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailRetryAfter, setEmailRetryAfter] = useState(0)
   const [now, setNow] = useState(() => Date.now())
   const [confirmError, setConfirmError] = useState('')
   const [confirming, setConfirming] = useState(false)
@@ -106,6 +109,15 @@ export default function SeatSelectionPage({ screeningId, user }) {
     const timer = setInterval(() => setNow(Date.now()), 30000)
     return () => clearInterval(timer)
   }, [step])
+
+  useEffect(() => {
+    if (emailRetryAfter <= 0) return
+    const timer = setInterval(
+      () => setEmailRetryAfter((value) => Math.max(0, value - 1)),
+      1000,
+    )
+    return () => clearInterval(timer)
+  }, [emailRetryAfter])
 
   function continueToContact() {
     if (!selected.length) {
@@ -244,9 +256,15 @@ export default function SeatSelectionPage({ screeningId, user }) {
         result.status === 'confirmed' &&
         result.reservation?.reference
       ) {
-        clearBookingDraft()
+        if (result.emailSent === true) clearBookingDraft()
         setUncertain(false)
         setConfirmation(result.reservation)
+        setEmailSent(result.emailSent === true)
+        setEmailRetryAfter(
+          Number.isInteger(result.emailRetryAfter)
+            ? Math.max(0, result.emailRetryAfter)
+            : 0,
+        )
         setStep('confirmed')
         return
       }
@@ -373,6 +391,48 @@ export default function SeatSelectionPage({ screeningId, user }) {
             <dd>{formatPrice(confirmation.totalAmountCents)}</dd>
           </dl>
           <p>Conservez cette référence pour votre passage au guichet.</p>
+          {confirmation.managementUrl && (
+            <ReservationPdfButton
+              reference={confirmation.reference}
+              query={
+                new URL(confirmation.managementUrl, window.location.origin)
+                  .search
+              }
+            />
+          )}
+          {confirmation.managementUrl && (
+            <a className="account-back" href={confirmation.managementUrl}>
+              Consulter ou annuler ma réservation
+            </a>
+          )}
+          {emailSent ? (
+            <p className="account-success" role="status">
+              Un mail de confirmation a été envoyé à {confirmation.email}.
+              Pensez à regarder vos spams.
+            </p>
+          ) : (
+            <div className="account-warning" role="status">
+              <p>
+                Votre réservation reste confirmée, mais le mail n’a pas pu être
+                envoyé.
+              </p>
+              <button
+                className="secondary-button"
+                disabled={confirming || emailRetryAfter > 0}
+                onClick={confirmReservation}
+              >
+                {confirming ? 'Envoi en cours…' : 'Réessayer l’envoi du mail'}
+              </button>
+              {emailRetryAfter > 0 && (
+                <p>Vous pourrez réessayer dans {emailRetryAfter} secondes.</p>
+              )}
+            </div>
+          )}
+          {confirmError && (
+            <p className="field-error" role="alert">
+              {confirmError}
+            </p>
+          )}
         </section>
       )}
       {!confirmation && !loading && !error && data && (

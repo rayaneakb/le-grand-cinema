@@ -208,6 +208,68 @@ La séance est verrouillée pendant la transaction. Si un siège est occupé, au
 
 La réponse confirmée contient la référence, les coordonnées fournies, le film, la salle, l’horaire, les sièges, le prix unitaire et le total enregistrés. Elle n’est pas mise en cache. La réservation est rattachée au compte connecté uniquement si son adresse vérifiée correspond à l’adresse de contact.
 
-Le brouillon avant connexion reste temporairement dans l’onglet. Après confirmation, il est supprimé. Une réponse réseau incertaine conserve la clé et propose de vérifier le résultat sans changer les coordonnées ni les places. Les sièges encore libres restent sélectionnés après un conflit.
+Le brouillon avant connexion reste temporairement dans l’onglet. Après confirmation et acceptation du mail, il est supprimé. Une réponse réseau incertaine conserve la clé et propose de vérifier le résultat sans changer les coordonnées ni les places. Les sièges encore libres restent sélectionnés après un conflit.
 
-Les mails de réservation, le PDF et l’annulation ne sont pas encore disponibles.
+Le mail de réservation est envoyé via Brevo après l’enregistrement. La réponse contient `emailSent` et `emailRetryAfter` (secondes avant un nouvel essai). `emailSent: true` signifie que le service d’envoi a accepté le mail, sans garantir sa livraison dans la boîte de réception.
+
+Un échec du transport conserve le statut confirmé et les places. Le client peut refaire le même `POST` avec les mêmes données et la même clé après le délai indiqué. Symfony retrouve la réservation existante et retente seulement le mail. Les essais sont espacés d’au moins une minute. Un envoi déjà enregistré comme accepté n’est pas répété.
+
+Les dates `confirmation_email_attempted_at` et `confirmation_email_sent_at` suivent ces opérations en base. Le verrou de la réservation évite deux envois simultanés. Si Brevo accepte le mail mais que le processus s’arrête avant l’enregistrement de cette acceptation, un nouvel essai peut produire un second mail ; la réservation reste unique.
+
+## Consulter et annuler une réservation
+
+`GET /api/reservations/{reference}` renvoie le récapitulatif et le statut. L’accès exige soit le lien signé reçu par mail, soit une session dont l’adresse vérifiée correspond à celle de la réservation. Cela permet aussi à un compte créé après une réservation sans compte de la retrouver avec la même adresse vérifiée.
+
+La confirmation fournit `managementUrl`, également inclus dans le mail. Le lien pointe vers `/reservations/{reference}`. Sa signature couvre l’adresse configurée, la référence et l’expiration. Il reste valable 30 jours après la séance. Le navigateur transmet sa chaîne de paramètres telle quelle à l’API. Une référence seule ne donne aucun accès et une signature modifiée ou expirée est refusée en `403`. Pour un compte connecté sans lien, une réservation d’un autre client renvoie `404`.
+
+La réponse contient `status`, `canCancel` et `cancellationDeadline`, en plus du récapitulatif. Les réponses ne sont pas mises en cache. La politique `no-referrer` empêche le navigateur de transmettre le lien personnel dans l’en-tête Referer.
+
+`POST /api/reservations/{reference}/cancel` utilise le même contrôle d’accès et exige le jeton `X-CSRF-Token` de la session. Le corps n’est pas nécessaire. Ouvrir le lien avec `GET` ne déclenche aucune annulation.
+
+Symfony verrouille la réservation puis vérifie l’heure côté serveur. L’annulation est acceptée jusqu’à deux heures avant la séance, limite incluse. Le statut `cancelled`, la date d’annulation et la libération des sièges sont enregistrés dans une seule transaction. Les lignes des places sont conservées avec une date de libération pour garder l’historique.
+
+- `200` pour une annulation ou une réservation déjà annulée, avec le statut à jour.
+- `403` pour un lien ou un jeton CSRF invalide, ou un accès sans authentification ni lien.
+- `404` pour une réservation inconnue ou appartenant à un autre compte.
+- `409` si le délai d’annulation est dépassé. La réservation reste active.
+
+Un nouvel essai d’annulation ne modifie pas les places reprises entre-temps par un autre client. Le PDF utilise ce même accès sécurisé.
+
+
+## Historique du compte client
+
+`GET /api/account/reservations?page=1` exige un compte connecté avec une adresse vérifiée. Symfony sélectionne les réservations à cette adresse, y compris celles effectuées sans compte avant l’inscription. Un paramètre d’adresse mail envoyé par le navigateur ne change pas cette sélection.
+
+La réponse contient `reservations`, `page` et `hasMore`. Chaque réservation fournit sa référence, son statut, le film, la salle, la date de séance, les sièges et le total enregistré. Les résultats sont triés par date de séance décroissante, puis par identifiant décroissant, avec 20 réservations par page. Les réservations annulées restent dans l’historique.
+
+Un visiteur reçoit `401`, un compte non vérifié `403` et un numéro de page invalide `422`. La réponse n’est pas mise en cache. Le lien du compte vers `/reservations/{reference}` utilise la session ; le détail vérifie à nouveau que la réservation appartient à cette adresse.
+
+
+## Télécharger la confirmation PDF
+
+`GET /api/reservations/{reference}/pdf` reprend le contrôle d’accès du récapitulatif. Un client connecté doit avoir la même adresse vérifiée que celle de la réservation. Sans compte, les paramètres du lien signé reçu par mail doivent être conservés.
+
+Une réservation confirmée renvoie `200`, un contenu `application/pdf` et un téléchargement nommé `reservation-{reference}.pdf`. Une réservation annulée renvoie `409` au format JSON. Les refus d’accès restent `403` ou `404`, comme pour le récapitulatif.
+
+Symfony génère le document à partir de la réservation enregistrée, avec son tarif conservé, ses sièges, ses coordonnées et l’heure de séance affichée pour Paris. Le document indique que le paiement se fait au cinéma. Les coordonnées de démonstration du cinéma sont configurées dans `config/services.yaml`.
+
+Le modèle PHP est dans `templates/pdf/reservation.php`. Les valeurs sont échappées avant leur insertion dans le HTML. [Dompdf](https://github.com/dompdf/dompdf) génère le PDF ; les ressources distantes, le JavaScript et l’exécution de PHP dans le document sont désactivés. Aucun PDF client n’est enregistré dans le dossier public et la réponse utilise `Cache-Control: no-store, private`.
+
+Un PDF déjà téléchargé reste lisible hors ligne après une annulation. Le document ne suffit donc pas à prouver qu’une réservation est encore active : le personnel contrôle son statut en base au guichet.
+
+
+## Administration du cinéma
+
+Les routes `/api/admin` exigent `ROLE_EMPLOYEE`. `ROLE_DIRECTOR` hérite de ce droit et autorise aussi le changement de tarif et les statistiques. Un visiteur doit se connecter (`401`) et un client authentifié reste refusé (`403`). Les réponses de gestion ne sont pas mises en cache.
+
+`GET /api/admin/settings` renvoie `ticketPriceCents` et `canChangePrice`.
+
+`POST /api/admin/settings/tariff` exige la direction et un jeton `X-CSRF-Token`. Le corps JSON contient uniquement `price`, une chaîne en euros, par exemple `"10,50"`. Les valeurs nulles, négatives, non numériques et les montants avec plus de deux décimales sont refusés en `422`. Symfony convertit le montant en centimes sans calcul flottant. La limite de stockage est celle de l’entier PostgreSQL, soit 2 147 483 647 centimes. Le nouveau tarif s’applique aux nouvelles réservations ; les prix déjà enregistrés ne changent pas.
+
+`GET /api/admin/reservations?q=...&page=1` recherche une référence exacte ou une adresse mail exacte, sans distinction de majuscules. La réponse contient `reservations`, `page` et `hasMore`, avec 20 résultats par page, triés par date de réservation décroissante. Le récapitulatif inclut le statut et les coordonnées nécessaires au contrôle au guichet. Cette route ne valide pas un paiement et ne modifie pas la réservation.
+
+`GET /api/admin/statistics?from=2030-01-01&to=2030-01-07` exige la direction. Les dates désignent les jours de séance à Paris, bornes incluses, sur une période d’au plus un an. Les réservations créées en dehors de cette période restent prises en compte si leur séance s’y déroule.
+
+La réponse contient `screenings` et `totals`. Les séances annulées sont exclues. Les réservations confirmées et annulées sont comptées séparément. Le taux d’occupation correspond aux sièges actifs des réservations confirmées divisés par la capacité de la séance, avec une décimale. Le taux global utilise la somme des capacités des séances de la période, et non la moyenne de leurs pourcentages. Sans séance, les nombres valent zéro et le taux est `null`.
+
+Ces statistiques concernent uniquement les réservations en ligne. Elles ne représentent ni les entrées réellement contrôlées au cinéma ni les achats effectués uniquement au guichet.

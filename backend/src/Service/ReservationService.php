@@ -133,7 +133,7 @@ class ReservationService
         }
     }
 
-    private function summary(int $id): array
+    public function summary(int $id): array
     {
         $booking = $this->connection->fetchAssociative(
             <<<'SQL'
