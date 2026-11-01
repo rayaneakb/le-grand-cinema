@@ -5,7 +5,7 @@ export default function AccountPage({ session }) {
   const { logout, busy, error } = useLogout(session.logoutToken)
 
   return (
-    <main id="compte" className="account-page">
+    <main id="compte" className="account-page profile-page">
       <section className="account-panel" aria-labelledby="profile-title">
         <p className="eyebrow">Votre espace cinéma</p>
         <h1 id="profile-title">Mon compte</h1>
@@ -14,6 +14,7 @@ export default function AccountPage({ session }) {
         ) : session.user ? (
           <>
             <p>Bonjour {session.user.firstName}.</p>
+            <h2>Mes coordonnées</h2>
             <dl className="account-details">
               <dt>Nom</dt>
               <dd>
@@ -22,7 +23,6 @@ export default function AccountPage({ session }) {
               <dt>Adresse mail</dt>
               <dd>{session.user.email}</dd>
             </dl>
-            <AccountReservations key={session.user.email} />
             <button className="primary-button" onClick={logout} disabled={busy}>
               {busy ? 'Déconnexion en cours…' : 'Me déconnecter'}
             </button>
@@ -41,6 +41,11 @@ export default function AccountPage({ session }) {
           </>
         )}
       </section>
+      {session.user && !session.loading && (
+        <div className="account-panel reservations-panel">
+          <AccountReservations key={session.user.email} />
+        </div>
+      )}
     </main>
   )
 }

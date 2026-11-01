@@ -174,7 +174,7 @@ export default function ReservationPage({ reference }) {
                           : 'Confirmer l’annulation'}
                       </button>
                       <button
-                        className="account-back"
+                        className="secondary-button account-back"
                         disabled={busy}
                         onClick={() => setAsking(false)}
                       >

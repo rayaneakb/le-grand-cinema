@@ -227,3 +227,182 @@
   padding-top: 1.5rem;
   border-top: 1px solid #dfe3de;
 }
+
+.profile-page {
+  display: grid;
+  gap: 24px;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.profile-page > .account-panel {
+  width: 100%;
+  max-width: none;
+}
+
+.reservations-panel .account-reservations {
+  margin: 0;
+}
+
+.admin-shell {
+  max-width: 1000px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.admin-navigation,
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block: 24px;
+}
+
+.admin-navigation a {
+  padding: 10px 16px;
+  border: 1px solid #bccbc3;
+  border-radius: 6px;
+  color: #28544c;
+  background: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-navigation a:hover {
+  background: #eaf2ec;
+}
+
+.admin-page .admin-section {
+  padding: 28px;
+  border: 1px solid #dfe3de;
+  border-radius: 12px;
+  background: white;
+}
+
+.admin-section h2 {
+  margin-top: 0;
+  scroll-margin-top: 24px;
+}
+
+.admin-film-list {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-film-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-block: 16px;
+  border-bottom: 1px solid #dfe3de;
+}
+
+.admin-film-item h3 {
+  margin-top: 0;
+}
+
+.admin-film-item .admin-poster {
+  width: 80px;
+  border-radius: 4px;
+}
+
+.modal {
+  width: min(680px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 28px;
+  border: 1px solid #dfe3de;
+  border-radius: 12px;
+  color: #202b32;
+  background: white;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modal::backdrop {
+  background: #162c2699;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.modal-context {
+  padding: 12px;
+  border-radius: 6px;
+  background: #eaf2ec;
+}
+
+.modal .account-form {
+  margin-top: 20px;
+}
+
+.modal textarea {
+  width: 100%;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.account-history-pages button:not(.primary-button) {
+  padding: 10px 16px;
+  border: 1px solid #99aaa4;
+  border-radius: 6px;
+  color: #28544c;
+  background: white;
+}
+
+@media (max-width: 640px) {
+  .admin-page .admin-section {
+    padding: 20px 16px;
+  }
+
+  .modal {
+    padding: 20px 16px;
+  }
+
+  .admin-film-item {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-film-item .admin-poster {
+    width: 60px;
+  }
+}
+
+.admin-section > p,
+.admin-film-item p {
+  margin-block: 12px;
+}
+
+.admin-section > .secondary-button {
+  margin-block: 8px 16px;
+}
+
+.modal-header {
+  position: sticky;
+  top: -28px;
+  z-index: 1;
+  padding-block: 12px;
+  background: white;
+}
+
+@media (max-width: 640px) {
+  .modal-header {
+    top: -20px;
+  }
+}
+
+.film-fields select {
+  width: 100%;
+  min-width: 0;
+}
