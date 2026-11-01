@@ -7,8 +7,11 @@ import AdminScreenings from './AdminScreenings'
 
 export default function AdminPage({ session }) {
   return (
-    <main id="compte" className="account-page">
-      <section className="account-panel" aria-labelledby="admin-title">
+    <main id="compte" className="account-page admin-page">
+      <section
+        className="account-panel admin-shell"
+        aria-labelledby="admin-title"
+      >
         <h1 id="admin-title">Administration du cinéma</h1>
         {session.loading ? (
           <p role="status">Vérification des accès…</p>
@@ -105,6 +108,16 @@ function AdminDashboard({ user }) {
       <p>
         Bonjour {user.firstName}. Espace {director ? 'direction' : 'employé'}.
       </p>
+      <nav
+        className="admin-navigation"
+        aria-label="Rubriques de l’administration"
+      >
+        <a href="#search-title">Réservations</a>
+        <a href="#films-title">Films</a>
+        <a href="#screenings-title">Séances</a>
+        <a href="#price-title">Tarif</a>
+        {director && <a href="#statistics-title">Statistiques</a>}
+      </nav>
       <section className="admin-section" aria-labelledby="search-title">
         <h2 id="search-title">Retrouver une réservation</h2>
         <form
@@ -194,6 +207,8 @@ function AdminDashboard({ user }) {
           </>
         )}
       </section>
+      <AdminFilms />
+      <AdminScreenings />
       <section className="admin-section" aria-labelledby="price-title">
         <h2 id="price-title">Tarif unique</h2>
         {settings && (
@@ -236,8 +251,6 @@ function AdminDashboard({ user }) {
           </p>
         )}
       </section>
-      <AdminFilms />
-      <AdminScreenings />
       {director && <AdminStatistics />}
     </>
   )

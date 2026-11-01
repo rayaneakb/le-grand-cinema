@@ -69,6 +69,7 @@ test('l’employé crée une séance puis la retrouve avec la fin calculée', as
     })
   })
   await page.goto('/admin')
+  await page.getByRole('button', { name: 'Nouvelle séance' }).click()
   await page.getByLabel('Film de la séance').selectOption('12')
   await page.getByLabel('Salle de la séance').selectOption('2')
   await page.getByLabel('Début de la séance').fill('2035-01-02T14:00')
@@ -165,7 +166,7 @@ test('annuler demande confirmation et permet de relancer un mail en échec', asy
   expect(calls).toBe(1)
 })
 
-test('un conflit avec un autre film reste visible sous le bouton avant une longue liste', async ({
+test('un conflit reste visible dans la modale avec l’horaire saisi', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 })
@@ -191,6 +192,7 @@ test('un conflit avec un autre film reste visible sous le bouton avant une longu
     })
   })
   await page.goto('/admin')
+  await page.getByRole('button', { name: 'Nouvelle séance' }).click()
   await page.getByLabel('Film de la séance').selectOption('13')
   await page.getByLabel('Salle de la séance').selectOption('2')
   await page.getByLabel('Début de la séance').fill('2035-01-02T15:57')
@@ -201,12 +203,27 @@ test('un conflit avec un autre film reste visible sous le bouton avant une longu
   await expect(page.getByLabel('Début de la séance')).toHaveValue(
     '2035-01-02T15:57',
   )
-  const beforeList = await alert.evaluate((node) =>
-    Boolean(
-      node.compareDocumentPosition(
-        document.querySelector('[aria-labelledby="screenings-title"] article'),
-      ) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ),
+  await expect(page.getByRole('dialog')).toBeVisible()
+})
+
+test('modifier ouvre une fenêtre avec la séance actuelle et protège le film réservé', async ({
+  page,
+}) => {
+  await page.route('**/api/admin/screenings?*', (route) =>
+    route.fulfill(reply()),
   )
-  expect(beforeList).toBe(true)
+  await page.goto('/admin')
+  await expect(page.getByLabel('Début de la séance')).toHaveCount(0)
+  const trigger = page.getByRole('button', {
+    name: 'Modifier la séance',
+    exact: true,
+  })
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: 'Modifier la séance' })
+  await expect(dialog).toContainText('Horaire actuel 02/01/2035 14:00')
+  await expect(dialog.getByLabel('Film de la séance')).toBeDisabled()
+  await expect(dialog.getByLabel('Salle de la séance')).toBeDisabled()
+  await expect(dialog.getByLabel('Début de la séance')).toBeEnabled()
+  await dialog.getByRole('button', { name: 'Fermer' }).click()
+  await expect(trigger).toBeFocused()
 })

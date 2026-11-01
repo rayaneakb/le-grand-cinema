@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Modal from './Modal'
 import { adminRequest } from '../utils/adminRequest'
 
 function parisDate(value) {
@@ -27,6 +28,7 @@ function dateLabel(value) {
 }
 
 export default function AdminScreenings() {
+  const [open, setOpen] = useState(false)
   const [date, setDate] = useState(() => parisDate(new Date()).slice(0, 10))
   const [data, setData] = useState(null)
   const [form, setForm] = useState({ filmId: '', roomId: '', startsAt: '' })
@@ -76,6 +78,7 @@ export default function AdminScreenings() {
 
   function edit(session) {
     setEditing(session)
+    setOpen(true)
     setForm(
       session
         ? {
@@ -120,6 +123,7 @@ export default function AdminScreenings() {
       if (!action) {
         const day = form.startsAt.slice(0, 10)
         setDate(day)
+        setOpen(false)
         setEditing(null)
         setForm({ filmId: '', roomId: '', startsAt: '' })
         await load(day)
@@ -173,98 +177,20 @@ export default function AdminScreenings() {
           >
             Nouvelle séance
           </button>
-          <form
-            className="account-form"
-            onSubmit={(event) => {
-              event.preventDefault()
-              write(null, editing?.id, {
-                filmId: Number(form.filmId),
-                roomId: Number(form.roomId),
-                startsAt: form.startsAt,
-              })
-            }}
-          >
-            <fieldset className="film-fields" disabled={saving}>
-              <legend>
-                {editing ? 'Modifier la séance' : 'Créer une séance'}
-              </legend>
-              <label htmlFor="screening-film">Film de la séance</label>
-              <select
-                id="screening-film"
-                required
-                value={form.filmId}
-                onChange={(event) =>
-                  setForm({ ...form, filmId: event.target.value })
-                }
-              >
-                <option value="">Choisir un film</option>
-                {editing &&
-                  !data.films.some((item) => item.id === editing.filmId) && (
-                    <option value={editing.filmId}>
-                      {editing.filmTitle} (retiré de l’affiche)
-                    </option>
-                  )}
-                {data.films.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-              {film && (
-                <p>
-                  Durée du film {film.durationMinutes} minutes. La fin est
-                  calculée automatiquement.
+          {!open && (
+            <div ref={feedback} tabIndex={-1}>
+              {error && (
+                <p className="field-error" role="alert">
+                  {error}
                 </p>
               )}
-              <label htmlFor="screening-room">Salle de la séance</label>
-              <select
-                id="screening-room"
-                required
-                value={form.roomId}
-                onChange={(event) =>
-                  setForm({ ...form, roomId: event.target.value })
-                }
-              >
-                <option value="">Choisir une salle</option>
-                {data.rooms.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              <label htmlFor="screening-start">Début de la séance</label>
-              <input
-                id="screening-start"
-                type="datetime-local"
-                required
-                value={form.startsAt}
-                onChange={(event) =>
-                  setForm({ ...form, startsAt: event.target.value })
-                }
-              />
-              {editing?.reservationCount > 0 && (
-                <p>
-                  Des réservations existent. Seul l’horaire peut changer, avec
-                  un délai de 24 heures pour l’ancien et le nouvel horaire.
+              {message && (
+                <p className="account-success" role="status">
+                  {message}
                 </p>
               )}
-              <button className="primary-button">
-                {saving ? 'Enregistrement…' : 'Enregistrer la séance'}
-              </button>
-            </fieldset>
-          </form>
-          <div ref={feedback} tabIndex={-1}>
-            {error && (
-              <p className="field-error" role="alert">
-                {error}
-              </p>
-            )}
-            {message && (
-              <p className="account-success" role="status">
-                {message}
-              </p>
-            )}
-          </div>
+            </div>
+          )}
           {data.screenings.length === 0 && (
             <p>Aucune séance pour cette date.</p>
           )}
@@ -337,6 +263,117 @@ export default function AdminScreenings() {
               )}
             </article>
           ))}
+          {open && (
+            <Modal
+              title={editing ? 'Modifier la séance' : 'Créer une séance'}
+              busy={saving}
+              onClose={() => {
+                setOpen(false)
+                setError('')
+              }}
+            >
+              {editing && (
+                <p className="modal-context">
+                  {editing.filmTitle} · {editing.room} · Horaire actuel{' '}
+                  {dateLabel(editing.startsAt)}
+                </p>
+              )}
+              <form
+                className="account-form"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  write(null, editing?.id, {
+                    filmId: Number(form.filmId),
+                    roomId: Number(form.roomId),
+                    startsAt: form.startsAt,
+                  })
+                }}
+              >
+                <fieldset className="film-fields" disabled={saving}>
+                  <label htmlFor="screening-film">Film de la séance</label>
+                  <select
+                    id="screening-film"
+                    disabled={editing?.reservationCount > 0}
+                    required
+                    value={form.filmId}
+                    onChange={(event) =>
+                      setForm({ ...form, filmId: event.target.value })
+                    }
+                  >
+                    <option value="">Choisir un film</option>
+                    {editing &&
+                      !data.films.some(
+                        (item) => item.id === editing.filmId,
+                      ) && (
+                        <option value={editing.filmId}>
+                          {editing.filmTitle} (retiré de l’affiche)
+                        </option>
+                      )}
+                    {data.films.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                      </option>
+                    ))}
+                  </select>
+                  {film && (
+                    <p>
+                      Durée du film {film.durationMinutes} minutes. La fin est
+                      calculée automatiquement.
+                    </p>
+                  )}
+                  <label htmlFor="screening-room">Salle de la séance</label>
+                  <select
+                    id="screening-room"
+                    disabled={editing?.reservationCount > 0}
+                    required
+                    value={form.roomId}
+                    onChange={(event) =>
+                      setForm({ ...form, roomId: event.target.value })
+                    }
+                  >
+                    <option value="">Choisir une salle</option>
+                    {data.rooms.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                  <label htmlFor="screening-start">Début de la séance</label>
+                  <input
+                    id="screening-start"
+                    type="datetime-local"
+                    required
+                    value={form.startsAt}
+                    onChange={(event) =>
+                      setForm({ ...form, startsAt: event.target.value })
+                    }
+                  />
+                  {editing?.reservationCount > 0 && (
+                    <p>
+                      Des réservations existent. Seul l’horaire peut changer,
+                      avec un délai de 24 heures pour l’ancien et le nouvel
+                      horaire.
+                    </p>
+                  )}
+                  <button className="primary-button">
+                    {saving ? 'Enregistrement…' : 'Enregistrer la séance'}
+                  </button>
+                </fieldset>
+              </form>
+              <div ref={feedback} tabIndex={-1}>
+                {error && (
+                  <p className="field-error" role="alert">
+                    {error}
+                  </p>
+                )}
+                {message && (
+                  <p className="account-success" role="status">
+                    {message}
+                  </p>
+                )}
+              </div>
+            </Modal>
+          )}
         </>
       )}
       {!data && error && (

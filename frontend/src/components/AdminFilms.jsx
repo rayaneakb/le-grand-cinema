@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Modal from './Modal'
 import { adminRequest } from '../utils/adminRequest'
 
 const emptyFilm = {
@@ -10,6 +11,7 @@ const emptyFilm = {
 }
 
 export default function AdminFilms() {
+  const [open, setOpen] = useState(false)
   const [films, setFilms] = useState([])
   const [film, setFilm] = useState(emptyFilm)
   const [poster, setPoster] = useState(null)
@@ -48,8 +50,9 @@ export default function AdminFilms() {
 
   function edit(value) {
     setFilm(value)
+    setOpen(true)
     setPoster(null)
-    fileInput.current.value = ''
+    if (fileInput.current) fileInput.current.value = ''
     setError('')
     setMessage('')
   }
@@ -105,8 +108,9 @@ export default function AdminFilms() {
       )
       setFilm(data.film)
       setPoster(null)
-      fileInput.current.value = ''
+      if (fileInput.current) fileInput.current.value = ''
       setMessage(data.message)
+      setOpen(false)
     } catch (failure) {
       setError(
         failure.name === 'TimeoutError'
@@ -129,117 +133,141 @@ export default function AdminFilms() {
   return (
     <section className="admin-section" aria-labelledby="films-title">
       <h2 id="films-title">Gérer les films</h2>
-      <p>Une séance associe un film à un horaire et à une salle.</p>
+      <div className="admin-toolbar">
+        <button
+          className="primary-button"
+          disabled={loading}
+          onClick={() => edit(emptyFilm)}
+        >
+          Ajouter un film
+        </button>
+        <button className="secondary-button" disabled={loading} onClick={load}>
+          Recharger la liste
+        </button>
+      </div>
       {loading ? (
         <p role="status">Chargement des films…</p>
       ) : (
-        <div className="account-history-pages">
-          <label htmlFor="admin-film">Film à modifier</label>
-          <select
-            id="admin-film"
-            value={film.id || ''}
-            disabled={saving}
-            onChange={(event) =>
-              edit(
-                films.find((item) => item.id === Number(event.target.value)) ||
-                  emptyFilm,
-              )
-            }
-          >
-            <option value="">Ajouter un film</option>
-            {films.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-                {item.isShowing ? '' : ' (retiré de l’affiche)'}
-              </option>
-            ))}
-          </select>
-          <button type="button" disabled={saving} onClick={load}>
-            Recharger la liste
-          </button>
+        <div className="admin-film-list">
+          {films.length === 0 && <p>Aucun film enregistré.</p>}
+          {films.map((item) => (
+            <article className="admin-film-item" key={item.id}>
+              <img
+                className="admin-poster"
+                src={item.posterUrl}
+                alt={`Affiche de ${item.title}`}
+              />
+              <div>
+                <h3>{item.title}</h3>
+                <p>
+                  {item.durationMinutes} minutes ·{' '}
+                  {item.isShowing ? 'À l’affiche' : 'Retiré de l’affiche'}
+                </p>
+                <button className="secondary-button" onClick={() => edit(item)}>
+                  Modifier le film
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       )}
-      <form className="account-form" onSubmit={save}>
-        <fieldset disabled={saving} className="film-fields">
-          <legend>{film.id ? 'Modifier le film' : 'Ajouter un film'}</legend>
-          <label htmlFor="film-title">Titre</label>
-          <input
-            id="film-title"
-            name="title"
-            required
-            maxLength={255}
-            value={film.title}
-            onChange={change}
-          />
-          <label htmlFor="film-synopsis">Synopsis</label>
-          <textarea
-            id="film-synopsis"
-            name="synopsis"
-            required
-            maxLength={20000}
-            rows={4}
-            value={film.synopsis}
-            onChange={change}
-          />
-          <label htmlFor="film-duration">Durée en minutes</label>
-          <input
-            id="film-duration"
-            name="durationMinutes"
-            type="number"
-            min="1"
-            step="1"
-            required
-            value={film.durationMinutes}
-            onChange={change}
-          />
-          <label htmlFor="film-actors">Acteurs principaux</label>
-          <textarea
-            id="film-actors"
-            name="mainActors"
-            required
-            maxLength={5000}
-            rows={2}
-            value={film.mainActors}
-            onChange={change}
-          />
-          <label htmlFor="film-poster">
-            Affiche {film.id ? '(laisser vide pour conserver l’actuelle)' : ''}
-          </label>
-          <input
-            ref={fileInput}
-            id="film-poster"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            required={!film.id}
-            onChange={choosePoster}
-          />
-          <p>JPEG, PNG ou WebP, 5 Mo maximum.</p>
-          {film.posterUrl && (
-            <img
-              className="admin-poster"
-              src={film.posterUrl}
-              alt={`Affiche actuelle de ${film.title}`}
-            />
+      {open && (
+        <Modal
+          title={film.id ? 'Modifier le film' : 'Ajouter un film'}
+          busy={saving}
+          onClose={() => {
+            setOpen(false)
+            setError('')
+          }}
+        >
+          <form className="account-form" onSubmit={save}>
+            <fieldset disabled={saving} className="film-fields">
+              <label htmlFor="film-title">Titre</label>
+              <input
+                id="film-title"
+                name="title"
+                required
+                maxLength={255}
+                value={film.title}
+                onChange={change}
+              />
+              <label htmlFor="film-synopsis">Synopsis</label>
+              <textarea
+                id="film-synopsis"
+                name="synopsis"
+                required
+                maxLength={20000}
+                rows={4}
+                value={film.synopsis}
+                onChange={change}
+              />
+              <label htmlFor="film-duration">Durée en minutes</label>
+              <input
+                id="film-duration"
+                name="durationMinutes"
+                type="number"
+                min="1"
+                step="1"
+                required
+                value={film.durationMinutes}
+                onChange={change}
+              />
+              <label htmlFor="film-actors">Acteurs principaux</label>
+              <textarea
+                id="film-actors"
+                name="mainActors"
+                required
+                maxLength={5000}
+                rows={2}
+                value={film.mainActors}
+                onChange={change}
+              />
+              <label htmlFor="film-poster">
+                Affiche{' '}
+                {film.id ? '(laisser vide pour conserver l’actuelle)' : ''}
+              </label>
+              <input
+                ref={fileInput}
+                id="film-poster"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                required={!film.id}
+                onChange={choosePoster}
+              />
+              <p>JPEG, PNG ou WebP, 5 Mo maximum.</p>
+              {film.posterUrl && (
+                <img
+                  className="admin-poster"
+                  src={film.posterUrl}
+                  alt={`Affiche actuelle de ${film.title}`}
+                />
+              )}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={film.isShowing}
+                  onChange={(event) =>
+                    setFilm((current) => ({
+                      ...current,
+                      isShowing: event.target.checked,
+                    }))
+                  }
+                />{' '}
+                Afficher le film dans la programmation
+              </label>
+              <button className="primary-button">
+                {saving ? 'Enregistrement…' : 'Enregistrer le film'}
+              </button>
+            </fieldset>
+          </form>
+          {error && (
+            <p role="alert" className="field-error">
+              {error}
+            </p>
           )}
-          <label>
-            <input
-              type="checkbox"
-              checked={film.isShowing}
-              onChange={(event) =>
-                setFilm((current) => ({
-                  ...current,
-                  isShowing: event.target.checked,
-                }))
-              }
-            />{' '}
-            Afficher le film dans la programmation
-          </label>
-          <button className="primary-button">
-            {saving ? 'Enregistrement…' : 'Enregistrer le film'}
-          </button>
-        </fieldset>
-      </form>
-      {error && (
+        </Modal>
+      )}
+      {!open && error && (
         <p role="alert" className="field-error">
           {error}
         </p>

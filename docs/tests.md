@@ -58,7 +58,7 @@ Pendant l’essai de création des séances, un horaire trop proche d’une séa
 
 Le message se trouve désormais sous le bouton d’enregistrement, avant les résultats. Le focus et le défilement permettent de le retrouver après la réponse du serveur. Le formulaire conserve les valeurs saisies pour les corriger.
 
-Le test Playwright « un conflit avec un autre film reste visible sous le bouton avant une longue liste » reproduit ce cas avec douze séances affichées. Il vérifie que le message est visible dans la fenêtre et que l’horaire saisi est conservé.
+Le test Playwright « un conflit reste visible dans la modale avec l’horaire saisi » reproduit ce cas avec douze séances affichées. Il vérifie que le message est visible dans la fenêtre et que l’horaire saisi est conservé.
 
 
 ## Sauvegarde et restauration
@@ -105,3 +105,13 @@ Les seuils k6 sont respectés. Les réponses de conflit attendues ne sont pas cl
 Le premier essai a été écarté, car les journaux avaient bloqué la sortie du serveur de test. Après correction du dispositif, l’essai ci-dessus a été exécuté sur une nouvelle copie de la base.
 
 Le rapport k6 est généré dans `backend/coverage/load-summary.json`. Le rapport de restauration indique aussi le résultat de la lecture par l’API et des contrôles de cohérence après la charge. Les bases temporaires utilisées pour ces essais ont été supprimées après vérification.
+
+## Fenêtres de l’administration
+
+Les formulaires des films et des séances s’ouvrent dans une modale. Les tests vérifient le maintien du focus dans la fenêtre, sa fermeture avec Échap, le retour au bouton d’ouverture et l’absence de débordement horizontal sur un écran de 390 pixels. La modification d’une séance affiche son horaire actuel. Lorsqu’elle possède des réservations, les champs du film et de la salle restent désactivés.
+
+## Affichage sur différentes tailles d’écran
+
+La recette `responsive.spec.js` parcourt les pages à 320, 390, 768 et 1 440 pixels de large dans Chromium. Elle utilise des noms, une adresse mail, un titre et un synopsis longs. Elle couvre la programmation, la connexion, l’inscription, l’activation, les mots de passe, le compte, la réservation et son annulation, les étapes de sélection jusqu’à la confirmation, ainsi que les résultats et les modales de l’administration.
+
+Les contrôles vérifient l’absence de débordement horizontal de la page et des modales, ainsi que l’accès aux boutons d’enregistrement et de fermeture. Un débordement des listes déroulantes avec les longs titres a été corrigé pendant cette recette. Les réponses de l’API sont simulées. Ces essais utilisent des tailles de fenêtre, sans reproduire un appareil physique ni Safari.
