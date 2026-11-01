@@ -112,3 +112,39 @@ test('la page suivante montre les anciennes réservations annulées', async ({
     page.getByText(`Référence ${reference} · Confirmée`),
   ).toBeVisible()
 })
+
+for (const [origin, message] of [
+  ['client', 'Vous avez annulé cette réservation.'],
+  ['cinema', 'La séance a été annulée par le cinéma.'],
+  [null, 'Votre réservation est annulée.'],
+]) {
+  test(`l’origine ${origin ?? 'inconnue'} reste visible dans le compte et le détail`, async ({
+    page,
+  }) => {
+    const cancelled = {
+      ...booking,
+      status: 'cancelled',
+      cancellationOrigin: origin,
+      firstName: 'Rayane',
+      lastName: 'Akbly',
+      email: 'rayane@example.com',
+      canCancel: false,
+    }
+    await page.route('**/api/account/reservations?*', (route) =>
+      route.fulfill({ json: { reservations: [cancelled], hasMore: false } }),
+    )
+    await page.route(`**/api/reservations/${reference}`, (route) =>
+      route.fulfill({ json: { reservation: cancelled } }),
+    )
+    await page.goto('/compte')
+    await expect(page.getByText(message, { exact: true })).toBeVisible()
+    await page.getByRole('link', { name: 'Voir ma réservation' }).click()
+    await expect(page.getByRole('status')).toHaveText(message)
+    await expect(
+      page.getByRole('button', { name: 'Télécharger ma confirmation PDF' }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole('button', { name: 'Annuler ma réservation', exact: true }),
+    ).toHaveCount(0)
+  })
+}

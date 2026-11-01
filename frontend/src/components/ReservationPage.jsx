@@ -1,3 +1,4 @@
+import { cancellationMessage } from '../utils/cancellationMessage'
 import ReservationPdfButton from './ReservationPdfButton'
 import { useEffect, useState } from 'react'
 
@@ -110,10 +111,12 @@ export default function ReservationPage({ reference }) {
               }
               role="status"
             >
-              {message ||
-                (booking.status === 'cancelled'
-                  ? 'Votre réservation est annulée.'
-                  : 'Votre réservation est confirmée.')}
+              {booking.status === 'cancelled' && booking.cancellationOrigin
+                ? cancellationMessage(booking.cancellationOrigin)
+                : message ||
+                  (booking.status === 'cancelled'
+                    ? cancellationMessage(null)
+                    : 'Votre réservation est confirmée.')}
             </p>
             <dl className="account-details">
               <dt>Numéro de réservation</dt>

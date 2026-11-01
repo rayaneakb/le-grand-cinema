@@ -57,6 +57,9 @@ class Reservation
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
 
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $cancellationOrigin = null;
+
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $confirmationEmailSentAt = null;
 
@@ -189,6 +192,21 @@ class Reservation
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getCancellationOrigin(): ?string
+    {
+        return $this->cancellationOrigin;
+    }
+
+    public function setCancellationOrigin(?string $origin): static
+    {
+        if ($origin !== null && !in_array($origin, ['client', 'cinema'], true)) {
+            throw new \InvalidArgumentException('Origine d’annulation inconnue.');
+        }
+        $this->cancellationOrigin = $origin;
+
+        return $this;
     }
 
     public function getCancelledAt(): ?\DateTimeImmutable

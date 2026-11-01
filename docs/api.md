@@ -240,7 +240,7 @@ Un nouvel essai d’annulation ne modifie pas les places reprises entre-temps pa
 
 `GET /api/account/reservations?page=1` exige un compte connecté avec une adresse vérifiée. Symfony sélectionne les réservations à cette adresse, y compris celles effectuées sans compte avant l’inscription. Un paramètre d’adresse mail envoyé par le navigateur ne change pas cette sélection.
 
-La réponse contient `reservations`, `page` et `hasMore`. Chaque réservation fournit sa référence, son statut, le film, la salle, la date de séance, les sièges et le total enregistré. Les résultats sont triés par date de séance décroissante, puis par identifiant décroissant, avec 20 réservations par page. Les réservations annulées restent dans l’historique.
+La réponse contient `reservations`, `page` et `hasMore`. Chaque réservation fournit sa référence, son statut, le film, la salle, la date de séance, les sièges et le total enregistré. Les résultats sont triés par date de séance décroissante, puis par identifiant décroissant, avec 20 réservations par page. Les réservations annulées restent dans l’historique. Le champ `cancellationOrigin` vaut `client` ou `cinema`. Il reste `null` pour une ancienne annulation dont l’origine est inconnue. Une annulation de séance conserve l’origine des réservations déjà annulées par leur client.
 
 Un visiteur reçoit `401`, un compte non vérifié `403` et un numéro de page invalide `422`. La réponse n’est pas mise en cache. Le lien du compte vers `/reservations/{reference}` utilise la session ; le détail vérifie à nouveau que la réservation appartient à cette adresse.
 
@@ -273,3 +273,33 @@ Les routes `/api/admin` exigent `ROLE_EMPLOYEE`. `ROLE_DIRECTOR` hérite de ce d
 La réponse contient `screenings` et `totals`. Les séances annulées sont exclues. Les réservations confirmées et annulées sont comptées séparément. Le taux d’occupation correspond aux sièges actifs des réservations confirmées divisés par la capacité de la séance, avec une décimale. Le taux global utilise la somme des capacités des séances de la période, et non la moyenne de leurs pourcentages. Sans séance, les nombres valent zéro et le taux est `null`.
 
 Ces statistiques concernent uniquement les réservations en ligne. Elles ne représentent ni les entrées réellement contrôlées au cinéma ni les achats effectués uniquement au guichet.
+
+
+## Gestion des films
+
+Ces routes sont réservées aux employés et à la direction. Les réponses ne sont pas mises en cache.
+
+- `GET /api/admin/films` renvoie les films, y compris ceux retirés de l’affiche.
+- `POST /api/admin/films` ajoute un film.
+- `POST /api/admin/films/{id}` modifie un film.
+
+Les deux écritures utilisent `multipart/form-data` avec le jeton `X-CSRF-Token`. Les champs attendus sont `title`, `synopsis`, `mainActors`, `durationMinutes` (entier positif) et `isShowing` (`1` ou `0`). Le fichier `poster` est obligatoire à la création et facultatif à la modification. Aucune URL ni aucun identifiant Cloudinary n’est accepté depuis le navigateur.
+
+Réponses d’écriture : `201` à la création, `200` après modification, `422` pour un formulaire ou un fichier invalide, `404` si le film est introuvable, `409` si la nouvelle durée crée un conflit de programmation, `503` si l’enregistrement échoue. Les plafonds des textes sont de 255 caractères pour le titre, 20 000 pour le synopsis et 5 000 pour les acteurs.
+
+Les écritures de programmation utilisent le verrou transactionnel PostgreSQL `7812601` pour vérifier les chevauchements sans modifications concurrentes. La gestion des séances devra utiliser ce même verrou.
+
+
+## Gestion des séances
+
+Accès employé ou direction, avec jeton CSRF `api` dans `X-CSRF-Token` pour les écritures.
+
+- `GET /api/admin/screenings?date=YYYY-MM-DD` renvoie les séances du jour à Paris, y compris annulées, les salles et les films à l’affiche.
+- `POST /api/admin/screenings` crée une séance. JSON attendu `filmId`, `roomId` (entiers) et `startsAt` au format `YYYY-MM-DDTHH:mm`, heure de Paris.
+- `POST /api/admin/screenings/{id}` modifie une séance avec les mêmes champs.
+- `POST /api/admin/screenings/{id}/cancel` annule la séance et ses réservations actives, puis libère les places. Un second appel ne crée pas de nouvelle notification.
+- `POST /api/admin/screenings/{id}/retry-emails` relance les notifications non envoyées, par lots de dix.
+
+Les écritures renvoient `id`, `message` et `pendingEmails` (sauf la relance, qui renvoie les deux derniers). La création renvoie `201`, les autres actions `200`. Un formulaire invalide renvoie `422`, une séance inconnue `404`, un conflit de programmation ou de délai `409`. Aucun mail réel n’est envoyé par les tests.
+
+Le contrôle d’une heure de marge et les modifications de durée partagent le même verrou transactionnel. La séance est verrouillée avant ses réservations pour sérialiser une création de réservation concurrente. Une notification en échec n’annule pas la modification déjà enregistrée.

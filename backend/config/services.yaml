@@ -7,6 +7,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    env(CLOUDINARY_CLOUD_NAME): ''
+    env(CLOUDINARY_API_KEY): ''
+    env(CLOUDINARY_API_SECRET): ''
     cinema.address: '1 rue Le Grand Cinéma, 75000 Paris'
     cinema.phone: '06 12 34 56 78'
     cinema.email: 'le.grand.cinema.contact@gmail.com'

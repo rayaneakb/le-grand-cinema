@@ -95,6 +95,7 @@ class ReservationManagementControllerTest extends WebTestCase
         $data = json_decode($this->client->getResponse()->getContent(), true)['reservation'];
         self::assertSame(['A1'], $data['seats']);
         self::assertTrue($data['canCancel']);
+        self::assertNull($data['cancellationOrigin']);
         self::assertSame('confirmed', $data['status']);
         foreach (['/api/reservations/ABCDEF0123456788' . $query, '/api/reservations/' . $this->reference . $query . '&extra=1', '/api/reservations/' . $this->reference . $this->query('2000-01-01T20:00:00+00:00')] as $url) {
             $this->client->request('GET', $url);
@@ -134,7 +135,11 @@ class ReservationManagementControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame($expected);
         self::assertSame($expected === 200 ? 'cancelled' : 'confirmed', $this->connection->fetchOne('SELECT status FROM reservation WHERE id = ?', [$this->booking]));
         self::assertSame($expected === 200 ? 0 : 1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM reserved_seat WHERE reservation_id = ? AND released_at IS NULL', [$this->booking]));
-        if ($expected === 200) self::assertFalse($response['reservation']['canCancel']);
+        self::assertSame($expected === 200 ? 'client' : null, $this->connection->fetchOne('SELECT cancellation_origin FROM reservation WHERE id = ?', [$this->booking]));
+        if ($expected === 200) {
+            self::assertFalse($response['reservation']['canCancel']);
+            self::assertSame('client', $response['reservation']['cancellationOrigin']);
+        }
     }
 
     public function testOpeningBeforeTheDeadlineDoesNotAllowLateConfirmation(): void
@@ -202,6 +207,7 @@ class ReservationManagementControllerTest extends WebTestCase
         $this->client->request('GET', '/api/account/reservations');
         $cancelled = json_decode($this->client->getResponse()->getContent(), true)['reservations'][0];
         self::assertSame('cancelled', $cancelled['status']);
+        self::assertSame('client', $cancelled['cancellationOrigin']);
         self::assertSame(['A1'], $cancelled['seats']);
     }
 

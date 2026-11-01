@@ -21,6 +21,12 @@ const booking = {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/admin/screenings?*', (route) =>
+    route.fulfill({ json: { screenings: [], films: [], rooms: [] } }),
+  )
+  await page.route('**/api/admin/films', (route) =>
+    route.fulfill({ json: { films: [] } }),
+  )
   await page.route('**/api/session', (route) =>
     route.fulfill({ json: { user } }),
   )
@@ -77,9 +83,7 @@ test('l’employé recherche une réservation sans accès au tarif ni aux statis
     page.getByText('Réservation confirmée', { exact: true }),
   ).toBeVisible()
   await expect(page.getByText('Sièges A1, A2')).toBeVisible()
-  await expect(
-    page.getByText(/camille@example\.com/),
-  ).toBeVisible()
+  await expect(page.getByText(/camille@example\.com/)).toBeVisible()
   await expect(page.getByLabel('Nouveau tarif en euros')).toHaveCount(0)
   await expect(
     page.getByRole('heading', {

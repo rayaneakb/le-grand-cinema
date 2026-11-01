@@ -30,7 +30,7 @@ class AccountReservationsController
         // Les réservations sans compte à cette même adresse font partie de l’historique.
         $rows = $connection->fetchAllAssociative(
             <<<'SQL'
-            SELECT b.id, b.reference, b.status, b.total_amount_cents, s.starts_at,
+            SELECT b.id, b.reference, b.status, b.cancellation_origin, b.total_amount_cents, s.starts_at,
                    f.title, r.name AS room,
                    COALESCE((SELECT string_agg(seat.row_label || seat.number::text, ', ' ORDER BY seat.row_label, seat.number)
                              FROM reserved_seat rs JOIN seat ON seat.id = rs.seat_id
@@ -50,6 +50,7 @@ class AccountReservationsController
         $bookings = array_map(static fn (array $row): array => [
             'reference' => $row['reference'],
             'status' => $row['status'],
+            'cancellationOrigin' => $row['cancellation_origin'],
             'filmTitle' => $row['title'],
             'room' => $row['room'],
             'startsAt' => (new \DateTimeImmutable($row['starts_at'], new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),

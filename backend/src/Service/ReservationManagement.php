@@ -39,7 +39,7 @@ class ReservationManagement
             }
             $timestamp = $now->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
             $this->connection->update('reservation', [
-                'status' => 'cancelled', 'cancelled_at' => $timestamp,
+                'status' => 'cancelled', 'cancelled_at' => $timestamp, 'cancellation_origin' => 'client',
             ], ['id' => $booking['id']]);
             $this->connection->executeStatement(
                 'UPDATE reserved_seat SET released_at = :now WHERE reservation_id = :id AND released_at IS NULL',

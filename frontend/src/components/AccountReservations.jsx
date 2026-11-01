@@ -1,3 +1,4 @@
+import { cancellationMessage } from '../utils/cancellationMessage'
 import { useEffect, useState } from 'react'
 
 export default function AccountReservations() {
@@ -86,6 +87,9 @@ export default function AccountReservations() {
                 Référence {booking.reference} ·{' '}
                 {booking.status === 'cancelled' ? 'Annulée' : 'Confirmée'}
               </p>
+              {booking.status === 'cancelled' && (
+                <p>{cancellationMessage(booking.cancellationOrigin)}</p>
+              )}
               <p>Sièges {booking.seats.join(', ')}</p>
               <a href={`/reservations/${booking.reference}`}>
                 Voir ma réservation

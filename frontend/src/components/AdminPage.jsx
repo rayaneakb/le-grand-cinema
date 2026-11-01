@@ -1,6 +1,9 @@
+import { cancellationMessage } from '../utils/cancellationMessage'
 import { useEffect, useState } from 'react'
 import { adminRequest, isStaff } from '../utils/adminRequest'
 import AdminStatistics from './AdminStatistics'
+import AdminFilms from './AdminFilms'
+import AdminScreenings from './AdminScreenings'
 
 export default function AdminPage({ session }) {
   return (
@@ -147,7 +150,7 @@ function AdminDashboard({ user }) {
                 >
                   {booking.status === 'confirmed'
                     ? 'Réservation confirmée'
-                    : 'Réservation annulée'}
+                    : cancellationMessage(booking.cancellationOrigin, true)}
                 </p>
                 <p>Référence {booking.reference}</p>
                 <p>
@@ -233,6 +236,8 @@ function AdminDashboard({ user }) {
           </p>
         )}
       </section>
+      <AdminFilms />
+      <AdminScreenings />
       {director && <AdminStatistics />}
     </>
   )
