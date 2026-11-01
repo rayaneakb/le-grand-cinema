@@ -136,6 +136,8 @@ Au démarrage, le conteneur applique les migrations et prépare le cache Symfony
 
 La route `/api/status` renvoie `200` si Symfony peut interroger PostgreSQL et `503` si la connexion échoue. Elle ne renvoie aucun détail de connexion.
 
+Les logs de démarrage indiquent le début et la fin des migrations, de la préparation du cache et du lancement d’Apache. Une étape en échec affiche son nom et son code de sortie. La connexion PostgreSQL utilise un délai de 10 secondes par tentative de connexion. Ce délai ne limite pas la durée des requêtes SQL.
+
 Après le déploiement, vérifier l’accueil, les affiches, `/api/films` et `/api/status`. Les instances gratuites peuvent se mettre en veille et nécessiter un temps de réveil. Les données restent dans Neon, indépendamment du conteneur Render.
 
 ## Envoi des mails
