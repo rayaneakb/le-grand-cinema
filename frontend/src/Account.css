@@ -191,3 +191,39 @@
 .account-menu-options .field-error {
   padding: 8px 12px;
 }
+
+.account-reservations {
+  margin-block: 2rem;
+}
+
+.account-reservation {
+  padding-block: 1.25rem;
+  border-bottom: 1px solid #dfe3de;
+  overflow-wrap: anywhere;
+}
+
+.account-reservation h3 {
+  margin: 0 0 0.5rem;
+}
+
+.account-reservation p {
+  margin-block: 0.5rem;
+}
+
+.account-history-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.reservation-pdf {
+  margin-block: 1.5rem;
+}
+
+.admin-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dfe3de;
+}

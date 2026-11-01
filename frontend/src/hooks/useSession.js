@@ -20,11 +20,17 @@ export default function useSession() {
       }
     }
 
+    function restorePage(event) {
+      if (event.persisted) loadSession()
+    }
+
     loadSession()
     window.addEventListener('focus', loadSession)
+    window.addEventListener('pageshow', restorePage)
     return () => {
       controller.abort()
       window.removeEventListener('focus', loadSession)
+      window.removeEventListener('pageshow', restorePage)
     }
   }, [])
 

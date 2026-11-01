@@ -1,3 +1,4 @@
+import { clearBookingDraft } from '../utils/bookingNavigation'
 import { useRef, useState } from 'react'
 
 export default function useLogout(token) {
@@ -17,6 +18,7 @@ export default function useLogout(token) {
         body: new URLSearchParams({ _csrf_token: token }),
       })
       if (!response.ok) throw new Error('Déconnexion impossible')
+      clearBookingDraft()
       window.location.assign('/connexion')
     } catch {
       setError('La déconnexion n’a pas pu être confirmée. Réessayez.')

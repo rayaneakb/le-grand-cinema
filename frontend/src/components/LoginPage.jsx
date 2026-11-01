@@ -1,3 +1,4 @@
+import { bookingReturnPath } from '../utils/bookingNavigation'
 import { useEffect, useRef, useState } from 'react'
 import ResendVerificationForm from './ResendVerificationForm'
 
@@ -51,7 +52,10 @@ export default function LoginPage() {
         return
       }
       if (data.status !== 'authenticated') throw new Error('Réponse incorrecte')
-      window.location.assign('/compte')
+      const returnPath = bookingReturnPath(
+        new URLSearchParams(window.location.search).get('retour'),
+      )
+      window.location.replace(returnPath || '/compte')
     } catch {
       setError('Le service est indisponible. Réessayez plus tard.')
     } finally {

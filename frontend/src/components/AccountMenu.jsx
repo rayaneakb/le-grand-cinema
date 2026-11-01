@@ -1,7 +1,13 @@
+import { isStaff } from '../utils/adminRequest'
+import { bookingReturnPath } from '../utils/bookingNavigation'
 import { useEffect, useRef, useState } from 'react'
 import useLogout from '../hooks/useLogout'
 
 export default function AccountMenu({ session }) {
+  const returnPath = bookingReturnPath(window.location.pathname)
+  const loginUrl = returnPath
+    ? `/connexion?retour=${encodeURIComponent(returnPath)}`
+    : '/connexion'
   const [open, setOpen] = useState(false)
   const container = useRef(null)
   const trigger = useRef(null)
@@ -52,6 +58,7 @@ export default function AccountMenu({ session }) {
           {session.user ? (
             <>
               <a href="/compte">Voir mon compte</a>
+              {isStaff(session.user) && <a href="/admin">Administration</a>}
               <button onClick={logout} disabled={busy}>
                 {busy ? 'Déconnexion en cours…' : 'Me déconnecter'}
               </button>
@@ -63,7 +70,14 @@ export default function AccountMenu({ session }) {
             </>
           ) : (
             <>
-              <a href="/connexion">Se connecter</a>
+              <a
+                href={loginUrl}
+                onClick={() =>
+                  window.dispatchEvent(new Event('cinema:before-login'))
+                }
+              >
+                Se connecter
+              </a>
               <a href="/inscription">Créer un compte</a>
             </>
           )}

@@ -9,10 +9,12 @@ RUN npm run build
 FROM php:8.4-apache-bookworm
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev libicu-dev unzip \
-    && docker-php-ext-install -j"$(nproc)" pdo_pgsql intl opcache \
+    && apt-get install -y --no-install-recommends libpq-dev libicu-dev libonig-dev unzip \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql intl mbstring opcache \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
+
+RUN printf 'upload_max_filesize=6M\npost_max_size=8M\n' > /usr/local/etc/php/conf.d/uploads.ini
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 

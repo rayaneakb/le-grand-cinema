@@ -371,3 +371,30 @@ footer {
   background: white;
   border-radius: 5px;
 }
+
+.film-fields {
+  display: grid;
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.film-fields select,
+.film-fields textarea,
+#admin-film {
+  font: inherit;
+  padding: 0.75rem;
+  border: 1px solid #99aaa4;
+  border-radius: 0.5rem;
+  max-width: 100%;
+}
+
+.film-fields input[type="checkbox"] {
+  width: auto;
+}
+
+.admin-poster {
+  width: 120px;
+  height: auto;
+}

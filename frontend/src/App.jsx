@@ -1,3 +1,6 @@
+import AdminPage from './components/AdminPage'
+import ReservationPage from './components/ReservationPage'
+import SeatSelectionPage from './components/SeatSelectionPage'
 import ForgotPasswordPage from './components/ForgotPasswordPage'
 import ResetPasswordPage from './components/ResetPasswordPage'
 import AccountMenu from './components/AccountMenu'
@@ -13,20 +16,28 @@ import './Account.css'
 export default function App() {
   const session = useSession()
   const path = window.location.pathname
+  const screeningMatch = path.match(/^\/seances\/([1-9][0-9]{0,9})\/sieges$/)
+  const reservationMatch = path.match(/^\/reservations\/([A-F0-9]{16})$/)
   const page =
-    path === '/inscription'
-      ? 'registration'
-      : path === '/activation'
-        ? 'activation'
-        : path === '/connexion'
-          ? 'login'
-          : path === '/compte'
-            ? 'account'
-            : path === '/mot-de-passe-oublie'
-              ? 'forgot'
-              : path === '/reinitialiser-mot-de-passe'
-                ? 'reset'
-                : 'programme'
+    path === '/admin'
+      ? 'admin'
+      : reservationMatch
+        ? 'reservation'
+        : screeningMatch
+          ? 'seats'
+          : path === '/inscription'
+            ? 'registration'
+            : path === '/activation'
+              ? 'activation'
+              : path === '/connexion'
+                ? 'login'
+                : path === '/compte'
+                  ? 'account'
+                  : path === '/mot-de-passe-oublie'
+                    ? 'forgot'
+                    : path === '/reinitialiser-mot-de-passe'
+                      ? 'reset'
+                      : 'programme'
 
   return (
     <>
@@ -52,7 +63,16 @@ export default function App() {
           <AccountMenu session={session} />
         </nav>
       </header>
-      {page === 'registration' ? (
+      {page === 'admin' ? (
+        <AdminPage session={session} />
+      ) : page === 'reservation' ? (
+        <ReservationPage reference={reservationMatch[1]} />
+      ) : page === 'seats' ? (
+        <SeatSelectionPage
+          screeningId={screeningMatch[1]}
+          user={session.user}
+        />
+      ) : page === 'registration' ? (
         <RegistrationPage />
       ) : page === 'activation' ? (
         <ActivationPage />
