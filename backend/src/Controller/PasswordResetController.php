@@ -60,6 +60,7 @@ class PasswordResetController
         PasswordReset $reset,
         ValidatorInterface $validator,
         UserPasswordHasherInterface $hasher,
+        \App\Validator\PasswordSafety $passwordSafety,
         Connection $connection,
     ): JsonResponse {
         $data = $this->payload($request);
@@ -91,6 +92,11 @@ class PasswordResetController
         $errors = $validator->validate($data->password ?? null, $constraints);
         if (count($errors) !== 0) {
             return $this->respond('invalid_password', (string) $errors[0]->getMessage(), 422);
+        }
+
+        $passwordError = $passwordSafety->error($data->password);
+        if ($passwordError !== null) {
+            return $this->respond('invalid_password', $passwordError, 422);
         }
 
         $oldHash = $user->getPassword();
