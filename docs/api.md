@@ -303,3 +303,9 @@ Accès employé ou direction, avec jeton CSRF `api` dans `X-CSRF-Token` pour les
 Les écritures renvoient `id`, `message` et `pendingEmails` (sauf la relance, qui renvoie les deux derniers). La création renvoie `201`, les autres actions `200`. Un formulaire invalide renvoie `422`, une séance inconnue `404`, un conflit de programmation ou de délai `409`. Aucun mail réel n’est envoyé par les tests.
 
 Le contrôle d’une heure de marge et les modifications de durée partagent le même verrou transactionnel. La séance est verrouillée avant ses réservations pour sérialiser une création de réservation concurrente. Une notification en échec n’annule pas la modification déjà enregistrée.
+
+## Retrouver un lien de réservation
+
+`POST /api/reservation-link` accepte un objet JSON avec `reference` et `email`, sans compte. La réponse 202 est identique pour une réservation trouvée ou inconnue. Le lien signé part uniquement à l’adresse enregistrée, pour une séance datant de moins de 30 jours. Une réservation annulée conserve son statut. Aucune réservation n’est créée.
+
+Une demande par minute est permise pour une adresse, avec dix demandes par IP sur quinze minutes. Les saisies invalides renvoient 422 et les demandes trop fréquentes 429. Un échec de transport est journalisé sans adresse ni lien personnel.

@@ -37,6 +37,7 @@ class ReservationManagementControllerTest extends WebTestCase
             throw new \RuntimeException('Une base dédiée _test est obligatoire.');
         }
         $this->connection->beginTransaction();
+        static::getContainer()->get('cache.rate_limiter')->clear();
         $this->clock = new MockClock('2030-01-01 17:59:00 UTC');
         static::getContainer()->set(ClockInterface::class, $this->clock);
         $room = $this->insert('room', ['name' => 'Salle annulation', 'type' => 'Standard']);
@@ -80,6 +81,45 @@ class ReservationManagementControllerTest extends WebTestCase
         $this->client->request('POST', '/api/reservations/' . $this->reference . '/cancel' . $query, server: $csrf ? ['HTTP_X_CSRF_TOKEN' => $token] : []);
 
         return json_decode($this->client->getResponse()->getContent(), true);
+    }
+
+    public function testLostLinkIsSentOnlyToTheRecordedEmailWithoutDisclosingTheBooking(): void
+    {
+        $this->client->jsonRequest('POST', '/api/reservation-link', ['reference' => $this->reference, 'email' => 'autre@example.com']);
+        self::assertResponseStatusCodeSame(202);
+        self::assertEmailCount(0);
+        $generic = $this->client->getResponse()->getContent();
+        $this->client->jsonRequest('POST', '/api/reservation-link', ['reference' => strtolower($this->reference), 'email' => ' ELODIE@example.com ']);
+        self::assertResponseStatusCodeSame(202);
+        self::assertSame($generic, $this->client->getResponse()->getContent());
+        self::assertEmailCount(1);
+        $mail = self::getMailerMessage();
+        self::assertSame('elodie@example.com', $mail->getTo()[0]->getAddress());
+        preg_match('~https?://[^\\s]+~', $mail->getTextBody(), $matches);
+        $this->client->request('GET', '/api/reservations/' . $this->reference . '?' . parse_url($matches[0], PHP_URL_QUERY));
+        self::assertResponseIsSuccessful();
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM reservation WHERE reference = ?', [$this->reference]));
+    }
+
+    public function testLostLinkIsLimitedAndInvalidInputNeverSendsMail(): void
+    {
+        $this->client->jsonRequest('POST', '/api/reservation-link', ['reference' => $this->reference, 'email' => 'incorrect']);
+        self::assertResponseStatusCodeSame(422);
+        $this->client->jsonRequest('POST', '/api/reservation-link', ['reference' => $this->reference, 'email' => 'elodie@example.com']);
+        self::assertResponseStatusCodeSame(202);
+        self::assertEmailCount(1);
+        $this->client->jsonRequest('POST', '/api/reservation-link', ['reference' => $this->reference, 'email' => 'elodie@example.com']);
+        self::assertResponseStatusCodeSame(429);
+        self::assertEmailCount(0);
+        self::assertNotNull($this->client->getResponse()->headers->get('Retry-After'));
+    }
+
+    public function testExpiredReservationDoesNotReceiveANewLink(): void
+    {
+        $this->connection->update('screening', ['starts_at' => '2000-01-01 20:00:00'], ['id' => $this->screening]);
+        $this->client->jsonRequest('POST', '/api/reservation-link', ['reference' => $this->reference, 'email' => 'elodie@example.com']);
+        self::assertResponseStatusCodeSame(202);
+        self::assertEmailCount(0);
     }
 
     public function testGuestNeedsTheValidPersonalLink(): void

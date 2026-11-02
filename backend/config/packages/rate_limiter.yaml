@@ -8,3 +8,11 @@ framework:
             policy: fixed_window
             limit: 1
             interval: '1 minute'
+        reservation_link:
+            policy: fixed_window
+            limit: 1
+            interval: '1 minute'
+        reservation_link_ip:
+            policy: fixed_window
+            limit: 10
+            interval: '15 minutes'

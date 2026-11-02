@@ -59,6 +59,11 @@ class ReservationConfirmationMailer
         });
     }
 
+    public function sendPersonalLink(array $booking): void
+    {
+        $this->mailer->send($this->message($booking));
+    }
+
     private function message(array $booking): Email
     {
         $date = (new \DateTimeImmutable($booking['startsAt']))->setTimezone(new \DateTimeZone('Europe/Paris'));
@@ -72,7 +77,7 @@ class ReservationConfirmationMailer
             ->subject('Votre réservation au Grand Cinéma — ' . $booking['reference'])
             ->text(
                 'Bonjour ' . $booking['firstName'] . ",\n\n"
-                . "Votre réservation est confirmée.\n\n"
+                . (($booking['status'] ?? 'confirmed') === 'cancelled' ? "Votre réservation est annulée.\n\n" : "Votre réservation est confirmée.\n\n")
                 . 'Numéro de réservation : ' . $booking['reference'] . "\n"
                 . 'Film : ' . $booking['filmTitle'] . "\n"
                 . 'Séance : ' . $date->format('d/m/Y à H:i') . " (heure de Paris)\n"
