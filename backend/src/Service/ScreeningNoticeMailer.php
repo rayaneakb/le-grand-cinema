@@ -46,20 +46,32 @@ class ScreeningNoticeMailer
         foreach ($ids as $id) {
             $sent = $this->connection->transactional(function () use ($id): bool {
                 $row = $this->connection->fetchAssociative('SELECT n.*, b.email FROM screening_notice n JOIN reservation b ON b.id = n.reservation_id WHERE n.id = ? FOR UPDATE OF n', [$id]);
-                if (!$row || $row['sent_at'] !== null) return true;
+                if (!$row || $row['sent_at'] !== null) {
+                    return true;
+                }
                 $now = $this->clock->now()->setTimezone(new \DateTimeZone('UTC'));
-                if ($row['attempted_at'] && $now->getTimestamp() - (new \DateTimeImmutable($row['attempted_at'], new \DateTimeZone('UTC')))->getTimestamp() < 60) return false;
+                if ($row['attempted_at'] && $now->getTimestamp() - (new \DateTimeImmutable($row['attempted_at'], new \DateTimeZone('UTC')))->getTimestamp() < 60) {
+                    return false;
+                }
                 $timestamp = $now->format('Y-m-d H:i:s');
                 $this->connection->update('screening_notice', ['attempted_at' => $timestamp], ['id' => $id]);
                 try {
-                    $this->mailer->send((new Email())->from(Address::create($this->sender))->to($row['email'])->subject($row['subject'])->text($row['message']));
+                    $this->mailer->send(
+                        (new Email())
+                            ->from(Address::create($this->sender))
+                            ->to($row['email'])
+                            ->subject($row['subject'])
+                            ->text($row['message'])
+                    );
                 } catch (TransportExceptionInterface) {
                     return false;
                 }
                 $this->connection->update('screening_notice', ['sent_at' => $timestamp], ['id' => $id]);
                 return true;
             });
-            if (!$sent) break;
+            if (!$sent) {
+                break;
+            }
         }
         return $this->pending($screening);
     }

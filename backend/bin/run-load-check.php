@@ -57,16 +57,26 @@ $http = HttpClient::create(['timeout' => 5]);
 try {
     $ready = false;
     for ($attempt = 0; $attempt < 30; ++$attempt) {
-        if (!$server->isRunning()) throw new RuntimeException('Le serveur de test n’a pas démarré. Vérifiez que le port 8002 est libre.');
+        if (!$server->isRunning()) {
+            throw new RuntimeException('Le serveur de test n’a pas démarré. Vérifiez que le port 8002 est libre.');
+        }
         try {
-            if ($http->request('GET', $base . '/api/status')->getStatusCode() === 200) { $ready = true; break; }
-        } catch (Throwable) {}
+            if ($http->request('GET', $base . '/api/status')->getStatusCode() === 200) {
+                $ready = true;
+                break;
+            }
+        } catch (Throwable) {
+        }
         usleep(200000);
     }
-    if (!$ready) throw new RuntimeException('Le serveur de test ne répond pas.');
+    if (!$ready) {
+        throw new RuntimeException('Le serveur de test ne répond pas.');
+    }
     // Relire une réservation restaurée par l’API, pas seulement par SQL.
     $booking = $db->fetchAssociative('SELECT reference, starts_at, b.status, total_amount_cents FROM reservation b JOIN screening s ON s.id = b.screening_id ORDER BY b.id LIMIT 1');
-    if (!$booking) throw new RuntimeException('Une réservation source est nécessaire pour contrôler sa restauration dans l’API.');
+    if (!$booking) {
+        throw new RuntimeException('Une réservation source est nécessaire pour contrôler sa restauration dans l’API.');
+    }
     $access = new ReservationAccess($secret, $base);
     $personal = $access->createUrl(['reference' => $booking['reference'], 'startsAt' => $booking['starts_at'] . ' UTC']);
     $query = parse_url($personal, PHP_URL_QUERY);
@@ -81,7 +91,9 @@ try {
     $screening = (int) $db->fetchOne("INSERT INTO screening (room_id, film_id, status, starts_at, ends_at) VALUES (?, ?, 'scheduled', NOW() AT TIME ZONE 'UTC' + INTERVAL '7 days', NOW() AT TIME ZONE 'UTC' + INTERVAL '7 days 2 hours') RETURNING id", [$room, $film]);
     $load = new Process(['k6', 'run', '--quiet', 'tests/Load/cinema.js'], $directory, ['BASE_URL' => $base, 'SCREENING_ID' => (string) $screening]);
     $load->setTimeout(150);
-    $load->run(static function (string $type, string $buffer): void { echo $buffer; });
+    $load->run(static function (string $type, string $buffer): void {
+        echo $buffer;
+    });
     $active = (int) $db->fetchOne("SELECT COUNT(*) FROM reservation WHERE screening_id = ? AND status = 'confirmed'", [$screening]);
     $duplicates = (int) $db->fetchOne('SELECT COUNT(*) FROM (SELECT screening_id, seat_id FROM reserved_seat WHERE released_at IS NULL GROUP BY screening_id, seat_id HAVING COUNT(*) > 1) d');
     $inconsistent = (int) $db->fetchOne(
@@ -93,7 +105,9 @@ try {
         'duplicateActiveSeats' => $duplicates, 'inconsistentTestReservations' => $inconsistent,
     ];
     file_put_contents($directory . '/var/backup-check/latest.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n");
-    if (!$load->isSuccessful() || $active !== 0 || $duplicates !== 0 || $inconsistent !== 0) throw new RuntimeException('Un contrôle de charge a échoué. Consultez les rapports locaux.');
+    if (!$load->isSuccessful() || $active !== 0 || $duplicates !== 0 || $inconsistent !== 0) {
+        throw new RuntimeException('Un contrôle de charge a échoué. Consultez les rapports locaux.');
+    }
     echo "Restauration relue par l’API. Test de charge terminé sans réservation active résiduelle ni siège actif en double.\n";
 } finally {
     $server->stop(3);

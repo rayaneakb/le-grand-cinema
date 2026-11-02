@@ -157,25 +157,56 @@ test('une recherche sans résultat garde un message clair', async ({ page }) => 
   await expect(page.getByText('Aucune réservation trouvée.')).toBeVisible()
 })
 
-test('l’employé corrige le mail dans une modale après vérification du demandeur', async ({ page }) => {
-  await page.route('**/api/admin/reservations?*', (route) => route.fulfill({ json: { reservations: [booking], page: 1, hasMore: false } }))
+test('l’employé corrige le mail dans une modale après vérification du demandeur', async ({
+  page,
+}) => {
+  await page.route('**/api/admin/reservations?*', (route) =>
+    route.fulfill({
+      json: { reservations: [booking], page: 1, hasMore: false },
+    }),
+  )
   await page.route('**/api/admin/reservations/*/email', (route) => {
     expect(route.request().headers()['x-csrf-token']).toBe('csrf-test')
-    expect(route.request().postDataJSON()).toEqual({ email: 'nouvelle@example.com', expectedEmail: booking.email, firstName: 'Camille', lastName: 'Martin', requesterVerified: true })
-    return route.fulfill({ json: { reservation: { ...booking, email: 'nouvelle@example.com' }, emailSent: true, message: 'L’adresse mail est corrigée et la confirmation a été envoyée.' } })
+    expect(route.request().postDataJSON()).toEqual({
+      email: 'nouvelle@example.com',
+      expectedEmail: booking.email,
+      firstName: 'Camille',
+      lastName: 'Martin',
+      requesterVerified: true,
+    })
+    return route.fulfill({
+      json: {
+        reservation: { ...booking, email: 'nouvelle@example.com' },
+        emailSent: true,
+        message:
+          'L’adresse mail est corrigée et la confirmation a été envoyée.',
+      },
+    })
   })
   await page.goto('/admin')
-  await page.getByLabel('Numéro de réservation ou adresse mail').fill(booking.reference)
+  await page
+    .getByLabel('Numéro de réservation ou adresse mail')
+    .fill(booking.reference)
   await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
-  await page.getByRole('button', { name: 'Corriger l’adresse mail', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Corriger l’adresse mail', exact: true })
+    .click()
   const modal = page.getByRole('dialog')
   await expect(modal).toBeVisible()
   await modal.getByLabel('Prénom donné par le demandeur').fill('Camille')
-  await modal.getByLabel('Nom donné par le demandeur', { exact: true }).fill('Martin')
+  await modal
+    .getByLabel('Nom donné par le demandeur', { exact: true })
+    .fill('Martin')
   await modal.getByLabel('Nouvelle adresse mail').fill('nouvelle@example.com')
   await modal.getByRole('checkbox').check()
-  await modal.getByRole('button', { name: 'Corriger et renvoyer la confirmation' }).click()
+  await modal
+    .getByRole('button', { name: 'Corriger et renvoyer la confirmation' })
+    .click()
   await expect(modal).not.toBeVisible()
-  await expect(page.getByRole('status')).toContainText('L’adresse mail est corrigée')
-  await expect(page.getByText('nouvelle@example.com', { exact: false })).toBeVisible()
+  await expect(page.getByRole('status')).toContainText(
+    'L’adresse mail est corrigée',
+  )
+  await expect(
+    page.getByText('nouvelle@example.com', { exact: false }),
+  ).toBeVisible()
 })

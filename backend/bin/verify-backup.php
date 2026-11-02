@@ -20,7 +20,9 @@ if (!in_array($params['host'] ?? '', ['127.0.0.1', 'localhost', '::1'], true)) {
 $source = DriverManager::getConnection($params);
 $name = 'cinema_restore_' . bin2hex(random_bytes(6));
 $directory = dirname(__DIR__) . '/var/backup-check';
-if (!is_dir($directory)) mkdir($directory, 0700, true);
+if (!is_dir($directory)) {
+    mkdir($directory, 0700, true);
+}
 $dump = $directory . '/' . $name . '.dump';
 $pgDirectory = rtrim(getenv('PG_BIN_DIRECTORY') ?: '', '/');
 $env = [
@@ -61,13 +63,17 @@ try {
     $target = DriverManager::getConnection($targetParams);
     $tables = $source->fetchFirstColumn("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename");
     $restoredTables = $target->fetchFirstColumn("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename");
-    if ($tables !== $restoredTables) throw new RuntimeException('Les tables restaurées ne correspondent pas.');
+    if ($tables !== $restoredTables) {
+        throw new RuntimeException('Les tables restaurées ne correspondent pas.');
+    }
     $counts = [];
     foreach ($tables as $table) {
         $sql = 'SELECT row_to_json(t)::text AS row FROM public.' . $source->quoteIdentifier($table) . ' t ORDER BY row';
         $expected = $source->fetchFirstColumn($sql);
         $actual = $target->fetchFirstColumn($sql);
-        if ($expected !== $actual) throw new RuntimeException('Données différentes dans la table ' . $table . '.');
+        if ($expected !== $actual) {
+            throw new RuntimeException('Données différentes dans la table ' . $table . '.');
+        }
         $counts[$table] = count($actual);
     }
     $sequencesSql = "SELECT sequencename, last_value FROM pg_sequences WHERE schemaname = 'public' ORDER BY sequencename";
@@ -86,7 +92,9 @@ try {
     file_put_contents($directory . '/latest.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n");
     echo json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
 } finally {
-    if ($source->isTransactionActive()) $source->rollBack();
+    if ($source->isTransactionActive()) {
+        $source->rollBack();
+    }
     $target?->close();
     if ($created && (!$success || !in_array('--keep', $argv, true))) {
         $admin->executeStatement('DROP DATABASE ' . $admin->quoteIdentifier($name));

@@ -2,7 +2,7 @@
 
 L’application permet aux spectateurs de consulter les films à l’affiche, de voir les séances disponibles, de choisir leurs sièges et de réserver. Le paiement s’effectue au cinéma.
 
-L’interface est développée avec React pour le frontend et Symfony gère la partie backend, les règles de réservation et les échanges avec la base de données PostgreSQL.
+React gère l’interface. Symfony applique les règles de réservation et communique avec PostgreSQL.
 
 # Organisation des branches
 
@@ -91,14 +91,14 @@ npm run test:e2e -- --ui
 
 Playwright démarre un serveur sur le port `5174`, distinct du site ouvert sur `5173`. Fermer son interface avant de lancer une seconde exécution qui utiliserait aussi ce port.
 
-Les tests de l’interface simulent les réponses de l’API. Ils couvrent la programmation, les comptes, la réservation, les annulations, le PDF et l’administration, ainsi que les erreurs et plusieurs affichages sur téléphone. Les essais avec le serveur réel restent nécessaires pour vérifier les échanges avec la base, Brevo et Cloudinary.
+Les tests de l’interface simulent les réponses de l’API. Ils couvrent la programmation, les comptes, la réservation, les annulations, le PDF et l’administration, ainsi que les erreurs et plusieurs affichages sur téléphone. Une seconde suite exécute trois parcours avec Symfony et une base PostgreSQL locale temporaire. Depuis `frontend`, lancer `npm run test:real` avec un rôle PostgreSQL autorisé à créer une base. Sur le poste de développement, utiliser `PG_ADMIN_USER=rayane npm run test:real`. Les ports 8003 et 5175 doivent être libres. La base de recette est supprimée après le contrôle et aucun mail réel n’est envoyé. Les essais Brevo et Cloudinary restent séparés.
 
 `npm run lint` lance l’analyse du code frontend.
 
 # Documentation
 
 - [Modèle de données](docs/modele-donnees.md)
-- [API de programmation](docs/api.md)
+- [Routes de l’API](docs/api.md)
 - [Tests, qualité et couverture](docs/tests.md)
 
 # Déploiement sur Render
@@ -142,7 +142,7 @@ Après le déploiement, vérifier l’accueil, les affiches, `/api/films` et `/a
 
 ## Envoi des mails
 
-Symfony Mailer utilise l’API HTTPS de Brevo. Définir ces variables dans `backend/.env.local` pour les essais et dans Render avant de déployer l’inscription.
+Symfony Mailer utilise l’API HTTPS de Brevo. Définir ces variables dans `backend/.env.local` pour les essais et dans Render pour le site déployé.
 
 ```dotenv
 MAILER_DSN="brevo+api://CLE_API_BREVO@default"
@@ -179,16 +179,16 @@ Dompdf est installé avec Composer. Le conteneur PHP inclut l’extension `mbstr
 
 Depuis `backend`, lancer `php bin/console app:create-staff`. La commande demande l’adresse mail, le prénom, le nom, le rôle et un mot de passe masqué de 15 à 128 caractères. Elle refuse une adresse déjà utilisée et ne modifie jamais les droits d’un compte existant.
 
-Ces comptes sont provisionnés et validés par l’administrateur du projet ; l’inscription publique crée uniquement des clients. Aucun mot de passe n’est passé dans les arguments de commande ni enregistré en clair. L’employé et la direction se connectent sur la même page que les clients, puis accèdent à « Administration » dans le menu du compte.
+L’administrateur du projet crée et valide ces comptes. L’inscription publique crée uniquement des clients. Aucun mot de passe n’est passé dans les arguments de commande ni enregistré en clair. L’employé et la direction se connectent sur la même page que les clients, puis accèdent à « Administration » dans le menu du compte.
 
-L’espace `/admin` permet de rechercher les réservations par référence ou adresse mail. La direction peut également modifier le tarif unique et consulter les statistiques par date de séance. Le personnel peut ajouter ou modifier un film et son affiche. Le personnel peut aussi créer, modifier ou annuler les séances.
+L’espace `/admin` permet de rechercher les réservations par référence ou adresse mail. La direction peut également modifier le tarif unique et consulter les statistiques par date de séance. Le personnel gère les films, leurs affiches et les séances.
 
 
 ### Affiches des films
 
 Renseigner `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` et `CLOUDINARY_API_SECRET` dans `backend/.env.local`, puis dans les variables Render avant le déploiement. Ces identifiants restent côté Symfony.
 
-Le formulaire accepte JPEG, PNG et WebP jusqu’à 5 Mo. Symfony vérifie le contenu du fichier. Une nouvelle affiche est envoyée à Cloudinary avant l’enregistrement du film. L’ancienne est supprimée après la sauvegarde en base. En cas d’échec de suppression, le film reste enregistré et un message invite à retirer l’ancienne image dans Cloudinary. Un échec réseau ambigu peut laisser une image orpheline à nettoyer.
+Le formulaire accepte JPEG, PNG et WebP jusqu’à 5 Mo. Symfony vérifie le contenu du fichier. Une nouvelle affiche est envoyée à Cloudinary avant l’enregistrement du film. L’ancienne est supprimée après la sauvegarde en base. En cas d’échec de suppression, le film reste enregistré et un message invite à retirer l’ancienne image dans Cloudinary. Si la réponse de Cloudinary se perd, une image peut rester stockée sans être liée à un film.
 
 Le conteneur accepte les transferts jusqu’à 6 Mo par fichier et 8 Mo par requête ; l’application limite les affiches à 5 Mo. Pour les essais locaux, lancer le serveur PHP depuis `backend` avec ces mêmes plafonds :
 

@@ -31,22 +31,40 @@ class AdminScreeningController extends AbstractController
     #[Route('', name: 'api_admin_screening_create', methods: ['POST'])]
     #[Route('/{id}', name: 'api_admin_screening_edit', requirements: ['id' => '[1-9][0-9]*'], methods: ['POST'])]
     #[Route('/{id}/{action}', name: 'api_admin_screening_action', requirements: ['id' => '[1-9][0-9]*', 'action' => 'cancel|retry-emails'], methods: ['POST'])]
-    public function write(Request $request, ScreeningAdministration $sessions, ScreeningNoticeMailer $notices, CsrfTokenManagerInterface $csrf, Connection $connection, ?int $id = null, ?string $action = null): JsonResponse
+    public function write(
+        Request $request,
+        ScreeningAdministration $sessions,
+        ScreeningNoticeMailer $notices,
+        CsrfTokenManagerInterface $csrf,
+        Connection $connection,
+        ?int $id = null,
+        ?string $action = null,
+    ): JsonResponse
     {
-        if (!$csrf->isTokenValid(new CsrfToken('api', $request->headers->get('X-CSRF-Token', '')))) return $this->respond(['message' => 'Votre formulaire a expiré. Réessayez.'], 403);
+        if (!$csrf->isTokenValid(new CsrfToken('api', $request->headers->get('X-CSRF-Token', '')))) {
+            return $this->respond(['message' => 'Votre formulaire a expiré. Réessayez.'], 403);
+        }
         try {
-            if ($action === 'cancel') return $this->respond($sessions->cancel($id));
+            if ($action === 'cancel') {
+                return $this->respond($sessions->cancel($id));
+            }
             if ($action === 'retry-emails') {
-                if (!$connection->fetchOne('SELECT id FROM screening WHERE id = ?', [$id])) throw new ScreeningProblem('Cette séance est introuvable.', 404);
+                if (!$connection->fetchOne('SELECT id FROM screening WHERE id = ?', [$id])) {
+                    throw new ScreeningProblem('Cette séance est introuvable.', 404);
+                }
                 return $this->respond(['pendingEmails' => $notices->sendPending($id), 'message' => 'Les notifications ont été relancées.']);
             }
-            if ($request->getContentTypeFormat() !== 'json') return $this->respond(['message' => 'Le format JSON est attendu.'], 415);
+            if ($request->getContentTypeFormat() !== 'json') {
+                return $this->respond(['message' => 'Le format JSON est attendu.'], 415);
+            }
             try {
                 $data = json_decode($request->getContent(), flags: JSON_THROW_ON_ERROR);
             } catch (\JsonException) {
                 throw new ScreeningProblem('Le contenu JSON est invalide.', 400);
             }
-            if (!$data instanceof \stdClass) throw new ScreeningProblem('Le formulaire est invalide.');
+            if (!$data instanceof \stdClass) {
+                throw new ScreeningProblem('Le formulaire est invalide.');
+            }
             return $this->respond($sessions->save($id, (array) $data), $id ? 200 : 201);
         } catch (ScreeningProblem $error) {
             return $this->respond(['message' => $error->getMessage()], $error->status);

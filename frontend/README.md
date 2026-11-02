@@ -1,6 +1,6 @@
 # Interface du Grand Cinéma
 
-Interface React de consultation des films et des séances.
+Interface React du Grand Cinéma, pour les spectateurs et le personnel.
 
 Depuis ce dossier :
 

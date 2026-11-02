@@ -23,24 +23,24 @@ export default function App() {
     path === '/retrouver-reservation'
       ? 'reservation-link'
       : path === '/admin'
-      ? 'admin'
-      : reservationMatch
-        ? 'reservation'
-        : screeningMatch
-          ? 'seats'
-          : path === '/inscription'
-            ? 'registration'
-            : path === '/activation'
-              ? 'activation'
-              : path === '/connexion'
-                ? 'login'
-                : path === '/compte'
-                  ? 'account'
-                  : path === '/mot-de-passe-oublie'
-                    ? 'forgot'
-                    : path === '/reinitialiser-mot-de-passe'
-                      ? 'reset'
-                      : 'programme'
+        ? 'admin'
+        : reservationMatch
+          ? 'reservation'
+          : screeningMatch
+            ? 'seats'
+            : path === '/inscription'
+              ? 'registration'
+              : path === '/activation'
+                ? 'activation'
+                : path === '/connexion'
+                  ? 'login'
+                  : path === '/compte'
+                    ? 'account'
+                    : path === '/mot-de-passe-oublie'
+                      ? 'forgot'
+                      : path === '/reinitialiser-mot-de-passe'
+                        ? 'reset'
+                        : 'programme'
 
   return (
     <>

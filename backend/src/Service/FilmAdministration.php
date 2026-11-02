@@ -35,11 +35,15 @@ class FilmAdministration
         if ($duration === false || !in_array($data['isShowing'] ?? null, ['0', '1'], true)) {
             throw new \InvalidArgumentException('La durée doit être un entier supérieur à 0. Précisez aussi si le film est à l’affiche.');
         }
-        if ($id === null && !$poster) throw new \InvalidArgumentException('Choisissez une affiche pour ce film.');
+        if ($id === null && !$poster) {
+            throw new \InvalidArgumentException('Choisissez une affiche pour ce film.');
+        }
         if ($id !== null && !$this->connection->fetchOne('SELECT id FROM film WHERE id = ?', [$id])) {
             throw new \OutOfBoundsException('Ce film est introuvable.');
         }
-        if ($poster) $this->posters->validate($poster);
+        if ($poster) {
+            $this->posters->validate($poster);
+        }
         $uploaded = $poster ? $this->posters->upload($poster) : null;
         $oldPoster = null;
         try {
@@ -47,8 +51,12 @@ class FilmAdministration
                 // Ce verrou est partagé avec la création et la modification des séances.
                 $this->connection->executeQuery('SELECT pg_advisory_xact_lock(7812601)');
                 $old = $id !== null ? $this->connection->fetchAssociative('SELECT * FROM film WHERE id = ? FOR UPDATE', [$id]) : null;
-                if ($id !== null && !$old) throw new \OutOfBoundsException('Ce film est introuvable.');
-                if ($old && (int) $old['duration_minutes'] !== $duration) $this->adjustScreenings($id, $duration);
+                if ($id !== null && !$old) {
+                    throw new \OutOfBoundsException('Ce film est introuvable.');
+                }
+                if ($old && (int) $old['duration_minutes'] !== $duration) {
+                    $this->adjustScreenings($id, $duration);
+                }
                 $values = [
                     'title' => $data['title'], 'synopsis' => $data['synopsis'], 'duration_minutes' => $duration,
                     'main_actors' => $data['mainActors'], 'is_showing' => $data['isShowing'] === '1' ? 'true' : 'false',
@@ -61,12 +69,16 @@ class FilmAdministration
                     );
                 } else {
                     $this->connection->update('film', $values, ['id' => $id]);
-                    if ($uploaded) $oldPoster = $old['poster_public_id'];
+                    if ($uploaded) {
+                        $oldPoster = $old['poster_public_id'];
+                    }
                 }
                 return $this->summary(['id' => $id, ...$values]);
             });
         } catch (\Throwable $failure) {
-            if ($uploaded) $this->posters->remove($uploaded['publicId']);
+            if ($uploaded) {
+                $this->posters->remove($uploaded['publicId']);
+            }
             throw $failure;
         }
         $cleanup = $oldPoster === null || $this->posters->remove($oldPoster);
@@ -92,7 +104,9 @@ class FilmAdministration
                 LIMIT 1
                 SQL, ['id' => $session['id']]
             );
-            if ($conflict) throw new \DomainException('Cette durée ne laisse plus une heure entre deux séances dans la même salle. Le film reste inchangé.');
+            if ($conflict) {
+                throw new \DomainException('Cette durée ne laisse plus une heure entre deux séances dans la même salle. Le film reste inchangé.');
+            }
         }
     }
 
