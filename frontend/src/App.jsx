@@ -1,3 +1,4 @@
+import ReservationLinkPage from './components/ReservationLinkPage'
 import AdminPage from './components/AdminPage'
 import ReservationPage from './components/ReservationPage'
 import SeatSelectionPage from './components/SeatSelectionPage'
@@ -19,7 +20,9 @@ export default function App() {
   const screeningMatch = path.match(/^\/seances\/([1-9][0-9]{0,9})\/sieges$/)
   const reservationMatch = path.match(/^\/reservations\/([A-F0-9]{16})$/)
   const page =
-    path === '/admin'
+    path === '/retrouver-reservation'
+      ? 'reservation-link'
+      : path === '/admin'
       ? 'admin'
       : reservationMatch
         ? 'reservation'
@@ -63,7 +66,9 @@ export default function App() {
           <AccountMenu session={session} />
         </nav>
       </header>
-      {page === 'admin' ? (
+      {page === 'reservation-link' ? (
+        <ReservationLinkPage />
+      ) : page === 'admin' ? (
         <AdminPage session={session} />
       ) : page === 'reservation' ? (
         <ReservationPage reference={reservationMatch[1]} />
