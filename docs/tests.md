@@ -25,10 +25,10 @@ Mesure locale du 2 novembre 2026, sur l’ensemble de `backend/src`, avec PHP 8.
 
 | Mesure | Résultat |
 | --- | --- |
-| Tests PHP | 116 réussis |
-| Assertions | 615 |
-| Lignes exécutées | 1 230 sur 1 596, soit 77,06 % |
-| Méthodes entièrement couvertes | 100 sur 239, soit 41,84 % |
+| Tests PHP | 118 réussis |
+| Assertions | 629 |
+| Lignes exécutées | 1 230 sur 1 600, soit 76,88 % |
+| Méthodes entièrement couvertes | 99 sur 239, soit 41,42 % |
 
 Cette mesure regroupe les tests unitaires et les tests d’intégration. Les fichiers non exécutés restent dans le calcul. PCOV mesure les lignes exécutées, sans couvrir tous les chemins possibles. Le code des processus PHP enfants utilisés pour la concurrence n’est pas collecté dans ce rapport.
 
