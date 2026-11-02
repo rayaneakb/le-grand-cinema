@@ -1,6 +1,7 @@
 import { cancellationMessage } from '../utils/cancellationMessage'
 import { useEffect, useState } from 'react'
 import { adminRequest, isStaff } from '../utils/adminRequest'
+import ReservationEmailCorrection from './ReservationEmailCorrection'
 import AdminFilms from './AdminFilms'
 import AdminScreenings from './AdminScreenings'
 
@@ -184,7 +185,17 @@ function AdminDashboard({ user }) {
                     currency: 'EUR',
                   })}
                 </p>
-                
+                <ReservationEmailCorrection
+                  booking={booking}
+                  onUpdated={(updated) => {
+                    setResult((current) => ({
+                      ...current,
+                      reservations: current.reservations.map((item) =>
+                        item.reference === updated.reference ? updated : item,
+                      ),
+                    }))
+                  }}
+                />
               </article>
             ))}
             {(result.page > 1 || result.hasMore) && (
