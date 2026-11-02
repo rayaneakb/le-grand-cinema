@@ -44,6 +44,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerifiedAt = null;
 
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $verificationVersion = null;
+
+    public function getVerificationVersion(): ?string
+    {
+        return $this->verificationVersion;
+    }
+
+    public function setVerificationVersion(string $version): static
+    {
+        $this->verificationVersion = $version;
+
+        return $this;
+    }
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));

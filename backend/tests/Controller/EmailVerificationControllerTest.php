@@ -123,6 +123,24 @@ class EmailVerificationControllerTest extends WebTestCase
         self::assertNull($this->connection->fetchOne('SELECT email_verified_at FROM "user"'));
     }
 
+    public function testResendInvalidatesThePreviousActivationLink(): void
+    {
+        $user = $this->register();
+        $verification = static::getContainer()->get(EmailVerification::class);
+        $oldUrl = $verification->createUrl($user);
+        $this->client->jsonRequest('POST', '/api/resend-verification', ['email' => 'elodie@example.com']);
+        self::assertResponseStatusCodeSame(202);
+        preg_match('~https?://[^\\s]+~', self::getMailerMessage()->getTextBody(), $matches);
+        $newUrl = $matches[0];
+        self::assertNotSame($oldUrl, $newUrl);
+        $this->client->request('GET', str_replace('/activation?', '/api/verify-email?', $oldUrl));
+        self::assertResponseStatusCodeSame(400);
+        self::assertNull($this->connection->fetchOne('SELECT email_verified_at FROM "user" WHERE id = ?', [$user->getId()]));
+        $this->client->request('GET', str_replace('/activation?', '/api/verify-email?', $newUrl));
+        self::assertResponseIsSuccessful();
+        self::assertNotNull($this->connection->fetchOne('SELECT email_verified_at FROM "user" WHERE id = ?', [$user->getId()]));
+    }
+
     public function testResendDoesNotCreateADuplicateAndIsRateLimited(): void
     {
         $this->register();
