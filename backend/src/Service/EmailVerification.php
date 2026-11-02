@@ -16,6 +16,7 @@ class EmailVerification
 
     public function __construct(
         private MailerInterface $mailer,
+        private \Doctrine\ORM\EntityManagerInterface $manager,
         #[Autowire('%kernel.secret%')] string $secret,
         #[Autowire('%env(DEFAULT_URI)%')] private string $baseUrl,
         #[Autowire('%env(MAILER_FROM)%')] private string $sender,
@@ -29,10 +30,14 @@ class EmailVerification
             throw new \LogicException('Le compte doit être enregistré avant de créer son lien.');
         }
 
-        $query = http_build_query([
+        $parameters = [
             'id' => $user->getId(),
             'emailHash' => hash('sha256', $user->getEmail()),
-        ]);
+        ];
+        if ($user->getVerificationVersion() !== null) {
+            $parameters['version'] = $user->getVerificationVersion();
+        }
+        $query = http_build_query($parameters);
         $url = rtrim($this->baseUrl, '/') . '/activation?' . $query;
         $expiresAt ??= new \DateTimeImmutable('+1 hour');
 
@@ -48,6 +53,9 @@ class EmailVerification
             (string) ($parameters['id'] ?? '') !== (string) $user->getId()
             || !is_string($parameters['emailHash'] ?? null)
             || !hash_equals(hash('sha256', $user->getEmail()), $parameters['emailHash'])
+            || ($user->getVerificationVersion() !== null
+                && (!is_string($parameters['version'] ?? null)
+                    || !hash_equals($user->getVerificationVersion(), $parameters['version'])))
         ) {
             throw new UnverifiedSignedUriException();
         }
@@ -55,6 +63,8 @@ class EmailVerification
 
     public function send(User $user): void
     {
+        $user->setVerificationVersion(bin2hex(random_bytes(16)));
+        $this->manager->flush();
         $url = $this->createUrl($user);
         $message = (new Email())
             ->from(Address::create($this->sender))
