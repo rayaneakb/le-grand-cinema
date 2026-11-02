@@ -14,6 +14,8 @@ Les noms des branches utilisent des minuscules, sans accents et avec des tirets 
 
 Chaque branche `feature/...` est créée depuis `develop`. Après développement et vérification, une pull request permet d’intégrer les changements à `develop`. Les versions stables sont ensuite intégrées à `main`.
 
+La reprise par user story du 2 novembre 2026 est détaillée dans [le tableau des branches et des pull requests](docs/organisation-user-stories.md). Elle conserve l’historique initial et utilise une branche d’intégration séparée avant le retour dans `develop`.
+
 # Installation locale
 
 Environnement utilisé pour le développement : PHP 8.4, Composer, PostgreSQL 17 et Node.js 24 avec npm.
