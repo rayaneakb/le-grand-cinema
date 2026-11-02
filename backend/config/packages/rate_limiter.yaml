@@ -16,3 +16,7 @@ framework:
             policy: fixed_window
             limit: 10
             interval: '15 minutes'
+        login_alert:
+            policy: fixed_window
+            limit: 1
+            interval: '15 minutes'

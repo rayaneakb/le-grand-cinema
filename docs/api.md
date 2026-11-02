@@ -321,3 +321,5 @@ La correction conserve le compte propriétaire, les sièges, la référence et l
 L’inscription, la réinitialisation et la création interne du personnel refusent une liste de mots de passe courants et vérifient les fuites connues via Pwned Passwords. Seuls les cinq premiers caractères du hachage SHA-1 sont envoyés au service. La comparaison du reste se fait côté Symfony. Ce hachage de recherche ne remplace pas le hachage sécurisé du mot de passe enregistré.
 
 Le contrôle attend au maximum cinq secondes. Une indisponibilité demande de réessayer et ne valide pas silencieusement le mot de passe. Les tests utilisent des réponses simulées.
+
+Après un blocage de connexion, le titulaire d’un compte vérifié reçoit une alerte avec un lien vers la demande de réinitialisation. L’alerte est limitée à une par adresse sur quinze minutes. Elle ne contient aucun mot de passe. Un échec de transport ne débloque pas la connexion et ne révèle pas l’existence du compte.

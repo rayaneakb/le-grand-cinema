@@ -129,6 +129,7 @@ class SessionControllerTest extends WebTestCase
 
     public function testFiveFailuresPreventFurtherLoginAttempts(): void
     {
+        static::getContainer()->get('cache.rate_limiter')->clear();
         $this->user();
         $token = $this->csrf();
         for ($i = 0; $i < 5; ++$i) {
@@ -137,6 +138,11 @@ class SessionControllerTest extends WebTestCase
         }
         $this->login($token);
         self::assertResponseStatusCodeSame(429);
+        self::assertEmailCount(1);
+        self::assertStringContainsString('/mot-de-passe-oublie', self::getMailerMessage()->getTextBody());
+        $this->login($token);
+        self::assertResponseStatusCodeSame(429);
+        self::assertEmailCount(0);
         $this->client->request('GET', '/api/session');
         self::assertNull($this->data()['user']);
     }
