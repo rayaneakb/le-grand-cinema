@@ -23,6 +23,7 @@ class AdminFilmController extends AbstractController
     }
 
     #[Route('', name: 'api_admin_film_create', methods: ['POST'])]
+    #[Route('/{id}', name: 'api_admin_film_edit', requirements: ['id' => '[1-9][0-9]*'], methods: ['POST'])]
     public function save(Request $request, FilmAdministration $films, CsrfTokenManagerInterface $csrf, ?int $id = null): JsonResponse
     {
         if (!$csrf->isTokenValid(new CsrfToken('api', $request->headers->get('X-CSRF-Token', '')))) {
