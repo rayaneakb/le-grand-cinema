@@ -30,6 +30,7 @@ class AdminScreeningController extends AbstractController
 
     #[Route('', name: 'api_admin_screening_create', methods: ['POST'])]
     #[Route('/{id}', name: 'api_admin_screening_edit', requirements: ['id' => '[1-9][0-9]*'], methods: ['POST'])]
+    #[Route('/{id}/{action}', name: 'api_admin_screening_action', requirements: ['id' => '[1-9][0-9]*', 'action' => 'cancel|retry-emails'], methods: ['POST'])]
     public function write(
         Request $request,
         ScreeningAdministration $sessions,
