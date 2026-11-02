@@ -315,3 +315,9 @@ Une demande par minute est permise pour une adresse, avec dix demandes par IP su
 `POST /api/admin/reservations/{reference}/email` est réservé au personnel et exige le jeton CSRF. Le JSON contient `email`, `expectedEmail`, `firstName`, `lastName` et `requesterVerified` à `true`. Le personnel demande au client son nom et son prénom, puis confirme la nouvelle adresse avec lui.
 
 La correction conserve le compte propriétaire, les sièges, la référence et le prix. Elle invalide les anciens liens personnels et renvoie la confirmation à la nouvelle adresse. L’adresse de connexion du compte reste inchangée. Une réservation annulée ou une adresse modifiée entre-temps renvoie 409. Une saisie invalide renvoie 422. Un échec d’envoi conserve la correction et permet une nouvelle demande de lien.
+
+## Vérification des mots de passe
+
+L’inscription, la réinitialisation et la création interne du personnel refusent une liste de mots de passe courants et vérifient les fuites connues via Pwned Passwords. Seuls les cinq premiers caractères du hachage SHA-1 sont envoyés au service. La comparaison du reste se fait côté Symfony. Ce hachage de recherche ne remplace pas le hachage sécurisé du mot de passe enregistré.
+
+Le contrôle attend au maximum cinq secondes. Une indisponibilité demande de réessayer et ne valide pas silencieusement le mot de passe. Les tests utilisent des réponses simulées.

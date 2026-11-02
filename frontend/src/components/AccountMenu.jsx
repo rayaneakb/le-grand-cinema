@@ -55,7 +55,6 @@ export default function AccountMenu({ session }) {
       </button>
       {open && (
         <div id="account-menu-options" className="account-menu-options">
-          <a href="/retrouver-reservation">Retrouver une réservation</a>
           {session.user ? (
             <>
               <a href="/compte">Voir mon compte</a>
@@ -82,6 +81,7 @@ export default function AccountMenu({ session }) {
               <a href="/inscription">Créer un compte</a>
             </>
           )}
+          <a href="/retrouver-reservation">Retrouver une réservation</a>
         </div>
       )}
     </div>

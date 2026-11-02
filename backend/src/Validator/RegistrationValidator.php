@@ -7,7 +7,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegistrationValidator
 {
-    public function __construct(private ValidatorInterface $validator)
+    public function __construct(private ValidatorInterface $validator, private PasswordSafety $passwordSafety)
     {
     }
 
@@ -46,6 +46,13 @@ class RegistrationValidator
         foreach ($this->validator->validate($data, $constraints) as $violation) {
             $field = trim($violation->getPropertyPath(), '[]');
             $errors[$field][] = (string) $violation->getMessage();
+        }
+
+        if (!isset($errors['password']) && is_string($data['password'] ?? null)) {
+            $message = $this->passwordSafety->error($data['password']);
+            if ($message !== null) {
+                $errors['password'][] = $message;
+            }
         }
 
         return $errors;

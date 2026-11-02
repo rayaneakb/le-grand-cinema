@@ -21,7 +21,14 @@ class RegistrationValidatorTest extends TestCase
 
     private function validator(): RegistrationValidator
     {
-        return new RegistrationValidator(Validation::createValidator());
+        return new RegistrationValidator(Validation::createValidator(), new \App\Validator\PasswordSafety(\App\Tests\Support\PasswordHttpClient::create()));
+    }
+
+    public function testCommonPasswordIsRejected(): void
+    {
+        $data = $this->validData();
+        $data['password'] = 'motdepasse123';
+        self::assertArrayHasKey('password', $this->validator()->validate($data));
     }
 
     public function testNamesWithAccentsAndPasswordWithSpacesAreAccepted(): void

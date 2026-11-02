@@ -33,3 +33,12 @@ when@prod:
         Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
             factory: ['App\Service\SessionHandlerFactory', 'create']
             arguments: ['@doctrine.dbal.default_connection']
+
+when@test:
+    services:
+        App\Validator\PasswordSafety:
+            arguments:
+                $client: '@password_safety_test_client'
+        password_safety_test_client:
+            class: Symfony\Component\HttpClient\MockHttpClient
+            factory: ['App\Tests\Support\PasswordHttpClient', 'create']
