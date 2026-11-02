@@ -39,11 +39,11 @@ class AccountReservationsController
             JOIN screening s ON s.id = b.screening_id
             JOIN film f ON f.id = s.film_id
             JOIN room r ON r.id = s.room_id
-            WHERE b.email = :email
+            WHERE b.user_id = :owner OR (b.user_id IS NULL AND b.email = :email)
             ORDER BY s.starts_at DESC, b.id DESC
             LIMIT 21 OFFSET :offset
             SQL,
-            ['email' => $user->getEmail(), 'offset' => $offset],
+            ['owner' => $user->getId(), 'email' => $user->getEmail(), 'offset' => $offset],
             ['offset' => \Doctrine\DBAL\ParameterType::INTEGER]
         );
         $hasMore = count($rows) > 20;

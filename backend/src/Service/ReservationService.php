@@ -138,7 +138,7 @@ class ReservationService
         $booking = $this->connection->fetchAssociative(
             <<<'SQL'
             SELECT b.reference, b.first_name, b.last_name, b.email, b.unit_price_cents,
-                   b.total_amount_cents, b.cancellation_origin, s.starts_at, r.name AS room, f.title
+                   b.total_amount_cents, b.cancellation_origin, b.access_version, s.starts_at, r.name AS room, f.title
             FROM reservation b
             JOIN screening s ON s.id = b.screening_id
             JOIN room r ON r.id = s.room_id
@@ -153,6 +153,7 @@ class ReservationService
         );
 
         return [
+            'accessVersion' => $booking['access_version'],
             'cancellationOrigin' => $booking['cancellation_origin'],
             'reference' => $booking['reference'], 'firstName' => $booking['first_name'],
             'lastName' => $booking['last_name'], 'email' => $booking['email'],

@@ -67,6 +67,14 @@ class Reservation
     private ?\DateTimeImmutable $confirmationEmailAttemptedAt = null;
 
 
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $accessVersion = null;
+
+    public function getAccessVersion(): ?string
+    {
+        return $this->accessVersion;
+    }
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
