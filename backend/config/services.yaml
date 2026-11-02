@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+parameters:
+    env(CLOUDINARY_CLOUD_NAME): ''
+    env(CLOUDINARY_API_KEY): ''
+    env(CLOUDINARY_API_SECRET): ''
+    cinema.address: '1 rue Le Grand Cinéma, 75000 Paris'
+    cinema.phone: '06 12 34 56 78'
+    cinema.email: 'le.grand.cinema.contact@gmail.com'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+when@prod:
+    services:
+        Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
+            factory: ['App\Service\SessionHandlerFactory', 'create']
+            arguments: ['@doctrine.dbal.default_connection']
+
+when@test:
+    services:
+        App\Validator\PasswordSafety:
+            arguments:
+                $client: '@password_safety_test_client'
+        password_safety_test_client:
+            class: Symfony\Component\HttpClient\MockHttpClient
+            factory: ['App\Tests\Support\PasswordHttpClient', 'create']
