@@ -1,16 +1,16 @@
-import AccountPage from './components/AccountPage'
-import ActivationPage from './components/ActivationPage'
-import AdminPage from './components/AdminPage'
-import ForgotPasswordPage from './components/ForgotPasswordPage'
-import LoginPage from './components/LoginPage'
-import RegistrationPage from './components/RegistrationPage'
 import ReservationLinkPage from './components/ReservationLinkPage'
+import AdminPage from './components/AdminPage'
 import ReservationPage from './components/ReservationPage'
-import ResetPasswordPage from './components/ResetPasswordPage'
 import SeatSelectionPage from './components/SeatSelectionPage'
-import ProgrammingPage from './components/ProgrammingPage'
-import useSession from './hooks/useSession'
+import ForgotPasswordPage from './components/ForgotPasswordPage'
+import ResetPasswordPage from './components/ResetPasswordPage'
 import AccountMenu from './components/AccountMenu'
+import LoginPage from './components/LoginPage'
+import AccountPage from './components/AccountPage'
+import useSession from './hooks/useSession'
+import ProgrammingPage from './components/ProgrammingPage'
+import RegistrationPage from './components/RegistrationPage'
+import ActivationPage from './components/ActivationPage'
 import './App.css'
 import './Account.css'
 
@@ -19,16 +19,83 @@ export default function App() {
   const path = window.location.pathname
   const screeningMatch = path.match(/^\/seances\/([1-9][0-9]{0,9})\/sieges$/)
   const reservationMatch = path.match(/^\/reservations\/([A-F0-9]{16})$/)
+  const page =
+    path === '/retrouver-reservation'
+      ? 'reservation-link'
+      : path === '/admin'
+        ? 'admin'
+        : reservationMatch
+          ? 'reservation'
+          : screeningMatch
+            ? 'seats'
+            : path === '/inscription'
+              ? 'registration'
+              : path === '/activation'
+                ? 'activation'
+                : path === '/connexion'
+                  ? 'login'
+                  : path === '/compte'
+                    ? 'account'
+                    : path === '/mot-de-passe-oublie'
+                      ? 'forgot'
+                      : path === '/reinitialiser-mot-de-passe'
+                        ? 'reset'
+                        : 'programme'
+
   return (
     <>
+      <a
+        href={page === 'programme' ? '#programmation' : '#compte'}
+        className="skip-link"
+      >
+        Aller au contenu
+      </a>
       <header className="site-header">
-        <a className="brand" href="/">Le Grand Cinéma</a>
+        <a className="brand" href="/" aria-label="Le Grand Cinéma, accueil">
+          <span className="brand-icon" aria-hidden="true">
+            G
+          </span>
+          <span>
+            Le Grand Cinéma<small>Le plaisir du grand écran</small>
+          </span>
+        </a>
         <nav aria-label="Navigation principale">
-          <a href="/">À l’affiche</a>
+          <a href="/" aria-current={page === 'programme' ? 'page' : undefined}>
+            À l’affiche
+          </a>
           <AccountMenu session={session} />
         </nav>
       </header>
-      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (path === '/compte' ? <AccountPage session={session} /> : (path === '/mot-de-passe-oublie' ? <ForgotPasswordPage /> : (path === '/reinitialiser-mot-de-passe' ? <ResetPasswordPage /> : (path === '/retrouver-reservation' ? <ReservationLinkPage /> : (path === '/admin' ? <AdminPage session={session} /> : (screeningMatch ? <SeatSelectionPage screeningId={screeningMatch[1]} user={session.user} /> : (reservationMatch ? <ReservationPage reference={reservationMatch[1]} /> : (<ProgrammingPage />))))))))))}
+      {page === 'reservation-link' ? (
+        <ReservationLinkPage />
+      ) : page === 'admin' ? (
+        <AdminPage session={session} />
+      ) : page === 'reservation' ? (
+        <ReservationPage reference={reservationMatch[1]} />
+      ) : page === 'seats' ? (
+        <SeatSelectionPage
+          screeningId={screeningMatch[1]}
+          user={session.user}
+        />
+      ) : page === 'registration' ? (
+        <RegistrationPage />
+      ) : page === 'activation' ? (
+        <ActivationPage />
+      ) : page === 'login' ? (
+        <LoginPage />
+      ) : page === 'account' ? (
+        <AccountPage session={session} />
+      ) : page === 'forgot' ? (
+        <ForgotPasswordPage />
+      ) : page === 'reset' ? (
+        <ResetPasswordPage />
+      ) : (
+        <ProgrammingPage />
+      )}
+      <footer>
+        <span className="footer-brand">Le Grand Cinéma</span>
+        <span>Des histoires à vivre sur grand écran.</span>
+      </footer>
     </>
   )
 }
