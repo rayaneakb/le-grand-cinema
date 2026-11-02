@@ -1,7 +1,9 @@
 import AccountPage from './components/AccountPage'
 import ActivationPage from './components/ActivationPage'
+import ForgotPasswordPage from './components/ForgotPasswordPage'
 import LoginPage from './components/LoginPage'
 import RegistrationPage from './components/RegistrationPage'
+import ResetPasswordPage from './components/ResetPasswordPage'
 import useSession from './hooks/useSession'
 import AccountMenu from './components/AccountMenu'
 import './App.css'
@@ -21,7 +23,7 @@ export default function App() {
           <AccountMenu session={session} />
         </nav>
       </header>
-      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (path === '/compte' ? <AccountPage session={session} /> : (<main id="compte"><h1>Le Grand Cinéma</h1></main>))))}
+      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (path === '/compte' ? <AccountPage session={session} /> : (path === '/mot-de-passe-oublie' ? <ForgotPasswordPage /> : (path === '/reinitialiser-mot-de-passe' ? <ResetPasswordPage /> : (<main id="compte"><h1>Le Grand Cinéma</h1></main>))))))}
     </>
   )
 }
