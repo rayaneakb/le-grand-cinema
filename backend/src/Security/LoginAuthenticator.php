@@ -18,6 +18,10 @@ use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface
 
 class LoginAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
+    public function __construct(private \App\Service\LoginAlert $alerts)
+    {
+    }
+
     public function supports(Request $request): ?bool
     {
         return $request->attributes->get('_route') === 'api_login' && $request->isMethod('POST');
@@ -76,6 +80,7 @@ class LoginAuthenticator extends AbstractAuthenticator implements Authentication
             $code = 'invalid_csrf';
             $message = 'Le formulaire a expiré. Rechargez la page pour réessayer.';
         } elseif ($exception instanceof TooManyLoginAttemptsAuthenticationException) {
+            $this->alerts->notify($request);
             $status = 429;
             $code = 'too_many_attempts';
             $message = 'Trop de tentatives. Patientez cinq minutes avant de réessayer.';
