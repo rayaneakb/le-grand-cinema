@@ -1,7 +1,9 @@
+import AccountPage from './components/AccountPage'
 import ActivationPage from './components/ActivationPage'
 import LoginPage from './components/LoginPage'
 import RegistrationPage from './components/RegistrationPage'
 import useSession from './hooks/useSession'
+import AccountMenu from './components/AccountMenu'
 import './App.css'
 import './Account.css'
 
@@ -16,9 +18,10 @@ export default function App() {
         <a className="brand" href="/">Le Grand Cinéma</a>
         <nav aria-label="Navigation principale">
           <a href="/">À l’affiche</a>
+          <AccountMenu session={session} />
         </nav>
       </header>
-      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (<main id="compte"><h1>Le Grand Cinéma</h1></main>)))}
+      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (path === '/compte' ? <AccountPage session={session} /> : (<main id="compte"><h1>Le Grand Cinéma</h1></main>))))}
     </>
   )
 }

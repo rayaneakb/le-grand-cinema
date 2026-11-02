@@ -24,6 +24,12 @@ class SessionController
         throw new \LogicException('La connexion doit être traitée par le pare-feu Symfony.');
     }
 
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    public function logout(): never
+    {
+        throw new \LogicException('La déconnexion doit être traitée par le pare-feu Symfony.');
+    }
+
     #[Route('/api/session', name: 'api_session', methods: ['GET'])]
     public function current(Request $request, #[CurrentUser] ?User $user, CsrfTokenManagerInterface $csrf): JsonResponse
     {
