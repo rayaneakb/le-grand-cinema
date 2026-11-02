@@ -1,5 +1,6 @@
 import AccountPage from './components/AccountPage'
 import ActivationPage from './components/ActivationPage'
+import AdminPage from './components/AdminPage'
 import ForgotPasswordPage from './components/ForgotPasswordPage'
 import LoginPage from './components/LoginPage'
 import RegistrationPage from './components/RegistrationPage'
@@ -27,7 +28,7 @@ export default function App() {
           <AccountMenu session={session} />
         </nav>
       </header>
-      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (path === '/compte' ? <AccountPage session={session} /> : (path === '/mot-de-passe-oublie' ? <ForgotPasswordPage /> : (path === '/reinitialiser-mot-de-passe' ? <ResetPasswordPage /> : (path === '/retrouver-reservation' ? <ReservationLinkPage /> : (screeningMatch ? <SeatSelectionPage screeningId={screeningMatch[1]} user={session.user} /> : (reservationMatch ? <ReservationPage reference={reservationMatch[1]} /> : (<ProgrammingPage />)))))))))}
+      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (path === '/connexion' ? <LoginPage /> : (path === '/compte' ? <AccountPage session={session} /> : (path === '/mot-de-passe-oublie' ? <ForgotPasswordPage /> : (path === '/reinitialiser-mot-de-passe' ? <ResetPasswordPage /> : (path === '/retrouver-reservation' ? <ReservationLinkPage /> : (path === '/admin' ? <AdminPage session={session} /> : (screeningMatch ? <SeatSelectionPage screeningId={screeningMatch[1]} user={session.user} /> : (reservationMatch ? <ReservationPage reference={reservationMatch[1]} /> : (<ProgrammingPage />))))))))))}
     </>
   )
 }
