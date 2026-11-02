@@ -2,6 +2,7 @@ import { cancellationMessage } from '../utils/cancellationMessage'
 import { useEffect, useState } from 'react'
 import { adminRequest, isStaff } from '../utils/adminRequest'
 import ReservationEmailCorrection from './ReservationEmailCorrection'
+import AdminStatistics from './AdminStatistics'
 import AdminFilms from './AdminFilms'
 import AdminScreenings from './AdminScreenings'
 
@@ -262,7 +263,7 @@ function AdminDashboard({ user }) {
           </p>
         )}
       </section>
-      
+      {director && <AdminStatistics />}
     </>
   )
 }

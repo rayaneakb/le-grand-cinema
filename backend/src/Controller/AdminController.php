@@ -80,6 +80,61 @@ class AdminController extends AbstractController
         return $this->respond(['reservations' => $bookings, 'hasMore' => count($rows) > 20, 'page' => (int) $page]);
     }
 
+    #[Route('/statistics', name: 'api_admin_statistics', methods: ['GET'])]
+    #[IsGranted('ROLE_DIRECTOR')]
+    public function statistics(Request $request, Connection $connection): JsonResponse
+    {
+        $paris = new \DateTimeZone('Europe/Paris');
+        $from = $request->query->get('from', '');
+        $to = $request->query->get('to', '');
+        if (!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $from) || !preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $to)) {
+            return $this->respond(['message' => 'Choisissez une période valide.'], 422);
+        }
+        $start = \DateTimeImmutable::createFromFormat('!Y-m-d', $from, $paris);
+        $end = \DateTimeImmutable::createFromFormat('!Y-m-d', $to, $paris);
+        if (!$start || !$end || $start->format('Y-m-d') !== $from || $end->format('Y-m-d') !== $to || $end < $start || $end->diff($start)->days > 366) {
+            return $this->respond(['message' => 'Choisissez une période valide, limitée à un an.'], 422);
+        }
+        $utc = new \DateTimeZone('UTC');
+        $rows = $connection->fetchAllAssociative(
+            <<<'SQL'
+            SELECT s.id, s.starts_at, f.title, r.name AS room, COALESCE(c.capacity, 0) AS capacity,
+                   COUNT(DISTINCT b.id) FILTER (WHERE b.status = 'confirmed') AS confirmed,
+                   COUNT(DISTINCT b.id) FILTER (WHERE b.status = 'cancelled') AS cancelled,
+                   COUNT(rs.id) FILTER (WHERE b.status = 'confirmed' AND rs.released_at IS NULL) AS booked_seats
+            FROM screening s
+            JOIN film f ON f.id = s.film_id
+            JOIN room r ON r.id = s.room_id
+            LEFT JOIN (SELECT room_id, COUNT(*) AS capacity FROM seat GROUP BY room_id) c ON c.room_id = r.id
+            LEFT JOIN reservation b ON b.screening_id = s.id
+            LEFT JOIN reserved_seat rs ON rs.reservation_id = b.id
+            WHERE s.status = 'scheduled' AND s.starts_at >= :start AND s.starts_at < :end
+            GROUP BY s.id, f.title, r.name, c.capacity
+            ORDER BY s.starts_at, s.id
+            SQL,
+            ['start' => $start->setTimezone($utc)->format('Y-m-d H:i:s'), 'end' => $end->modify('+1 day')->setTimezone($utc)->format('Y-m-d H:i:s')]
+        );
+        $screenings = array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'], 'filmTitle' => $row['title'], 'room' => $row['room'],
+            'startsAt' => (new \DateTimeImmutable($row['starts_at'], new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
+            'capacity' => (int) $row['capacity'], 'bookedSeats' => (int) $row['booked_seats'],
+            'confirmedReservations' => (int) $row['confirmed'], 'cancelledReservations' => (int) $row['cancelled'],
+            'occupancyRate' => (int) $row['capacity'] > 0 ? round(100 * (int) $row['booked_seats'] / (int) $row['capacity'], 1) : null,
+        ], $rows);
+        $capacity = array_sum(array_column($screenings, 'capacity'));
+        $booked = array_sum(array_column($screenings, 'bookedSeats'));
+
+        return $this->respond([
+            'screenings' => $screenings,
+            'totals' => [
+                'confirmedReservations' => array_sum(array_column($screenings, 'confirmedReservations')),
+                'cancelledReservations' => array_sum(array_column($screenings, 'cancelledReservations')),
+                'bookedSeats' => $booked,
+                'occupancyRate' => $capacity > 0 ? round(100 * $booked / $capacity, 1) : null,
+            ],
+        ]);
+    }
+
     private function respond(array $data, int $status = 200): JsonResponse
     {
         return new JsonResponse($data, $status, ['Cache-Control' => 'no-store']);
