@@ -286,7 +286,7 @@ test('le menu se ferme au clic extérieur et ne déborde pas sur téléphone', a
     path: 'test-results/account-menu-mobile.png',
     fullPage: true,
   })
-  await page.getByRole('heading', { name: 'Se connecter' }).click()
+  await page.getByLabel('Adresse mail', { exact: true }).click()
   await expect(button).toHaveAttribute('aria-expanded', 'false')
 })
 
