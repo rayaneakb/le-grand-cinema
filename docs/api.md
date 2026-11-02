@@ -309,3 +309,9 @@ Le contrôle d’une heure de marge et les modifications de durée partagent le 
 `POST /api/reservation-link` accepte un objet JSON avec `reference` et `email`, sans compte. La réponse 202 est identique pour une réservation trouvée ou inconnue. Le lien signé part uniquement à l’adresse enregistrée, pour une séance datant de moins de 30 jours. Une réservation annulée conserve son statut. Aucune réservation n’est créée.
 
 Une demande par minute est permise pour une adresse, avec dix demandes par IP sur quinze minutes. Les saisies invalides renvoient 422 et les demandes trop fréquentes 429. Un échec de transport est journalisé sans adresse ni lien personnel.
+
+## Corriger une adresse de réservation
+
+`POST /api/admin/reservations/{reference}/email` est réservé au personnel et exige le jeton CSRF. Le JSON contient `email`, `expectedEmail`, `firstName`, `lastName` et `requesterVerified` à `true`. Le personnel demande au client son nom et son prénom, puis confirme la nouvelle adresse avec lui.
+
+La correction conserve le compte propriétaire, les sièges, la référence et le prix. Elle invalide les anciens liens personnels et renvoie la confirmation à la nouvelle adresse. L’adresse de connexion du compte reste inchangée. Une réservation annulée ou une adresse modifiée entre-temps renvoie 409. Une saisie invalide renvoie 422. Un échec d’envoi conserve la correction et permet une nouvelle demande de lien.

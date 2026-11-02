@@ -4,6 +4,7 @@ namespace App\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\UriSigner;
+use Symfony\Component\HttpFoundation\Exception\UnverifiedSignedUriException;
 
 class ReservationAccess
 {
@@ -20,12 +21,21 @@ class ReservationAccess
     {
         $expiresAt = (new \DateTimeImmutable($booking['startsAt']))->modify('+30 days');
 
-        return $this->signer->sign($this->url($booking['reference']), $expiresAt);
+        $url = $this->url($booking['reference']);
+        if (!empty($booking['accessVersion'])) {
+            $url .= '?' . http_build_query(['version' => $booking['accessVersion']]);
+        }
+
+        return $this->signer->sign($url, $expiresAt);
     }
 
-    public function verify(string $reference, string $query): void
+    public function verify(string $reference, string $query, ?string $version = null): void
     {
         $this->signer->verify($this->url($reference) . '?' . $query);
+        parse_str($query, $parameters);
+        if ($version !== null && (!is_string($parameters['version'] ?? null) || !hash_equals($version, $parameters['version']))) {
+            throw new UnverifiedSignedUriException();
+        }
     }
 
     private function url(string $reference): string

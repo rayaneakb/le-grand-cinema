@@ -53,25 +53,28 @@ class ReservationManagement
 
     private function authorizedBooking(string $reference, string $query, ?User $user, bool $lock = false): array
     {
+        $booking = $this->connection->fetchAssociative(
+            'SELECT b.id, b.status, b.email, b.user_id, b.access_version, s.starts_at FROM reservation b JOIN screening s ON s.id = b.screening_id WHERE b.reference = :reference'
+                . ($lock ? ' FOR UPDATE OF b' : ''),
+            ['reference' => $reference]
+        );
         $signed = false;
         if ($query !== '') {
             try {
-                $this->access->verify($reference, $query);
+                $this->access->verify($reference, $query, $booking['access_version'] ?? null);
                 $signed = true;
             } catch (SignedUriException) {
-                throw new ReservationProblem('Ce lien est invalide ou a expiré. Utilisez le lien reçu par mail ou connectez-vous à votre compte.', 403);
+                throw new ReservationProblem('Ce lien est invalide ou a expiré. Demandez un nouveau lien ou connectez-vous à votre compte.', 403);
             }
         }
         $verified = $user !== null && $user->getEmailVerifiedAt() !== null;
         if (!$signed && !$verified) {
             throw new ReservationProblem('Utilisez le lien reçu par mail ou connectez-vous à votre compte.', 403);
         }
-        $booking = $this->connection->fetchAssociative(
-            'SELECT b.id, b.status, b.email, s.starts_at FROM reservation b JOIN screening s ON s.id = b.screening_id WHERE b.reference = :reference'
-                . ($lock ? ' FOR UPDATE OF b' : ''),
-            ['reference' => $reference]
-        );
-        if (!$booking || (!$signed && $booking['email'] !== $user->getEmail())) {
+        $owner = $verified && $booking && ($booking['user_id'] !== null
+            ? (int) $booking['user_id'] === $user->getId()
+            : $booking['email'] === $user->getEmail());
+        if (!$booking || (!$signed && !$owner)) {
             throw new ReservationProblem('Cette réservation est introuvable.', 404);
         }
 

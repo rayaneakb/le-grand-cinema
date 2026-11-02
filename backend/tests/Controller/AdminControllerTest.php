@@ -164,6 +164,102 @@ class AdminControllerTest extends WebTestCase
         self::assertSame([], json_decode($this->client->getResponse()->getContent(), true)['reservations']);
     }
 
+    private function correctEmail(array $changes = [], bool $csrf = true): array
+    {
+        $this->client->request('GET', '/api/csrf');
+        $token = json_decode($this->client->getResponse()->getContent(), true)['csrfToken'];
+        $this->client->jsonRequest('POST', '/api/admin/reservations/ABCDEF0123456789/email', [
+            'email' => 'nouvelle@example.com', 'expectedEmail' => 'client@example.com',
+            'firstName' => 'Client', 'lastName' => 'Test', 'requesterVerified' => true,
+            ...$changes,
+        ], $csrf ? ['HTTP_X_CSRF_TOKEN' => $token] : []);
+
+        return json_decode($this->client->getResponse()->getContent(), true) ?? [];
+    }
+
+    public function testEmployeeCorrectsContactWithoutChangingAccountSeatsPriceOrReference(): void
+    {
+        $owner = (new User())->setEmail('client@example.com')->setFirstName('Client')->setLastName('Test')
+            ->setPassword('hash-test')->setEmailVerifiedAt(new \DateTimeImmutable());
+        $manager = static::getContainer()->get(EntityManagerInterface::class);
+        $manager->persist($owner);
+        $manager->flush();
+        $this->connection->update('reservation', ['user_id' => $owner->getId(), 'confirmation_key' => str_repeat('a', 32)], ['id' => $this->booking]);
+        $access = static::getContainer()->get(\App\Service\ReservationAccess::class);
+        $oldUrl = $access->createUrl(static::getContainer()->get(\App\Service\ReservationService::class)->summary($this->booking));
+        $this->login('ROLE_EMPLOYEE');
+        $result = $this->correctEmail();
+        self::assertResponseIsSuccessful();
+        self::assertTrue($result['emailSent']);
+        self::assertSame('nouvelle@example.com', $result['reservation']['email']);
+        self::assertEmailCount(1);
+        $mail = self::getMailerMessage();
+        self::assertSame('nouvelle@example.com', $mail->getTo()[0]->getAddress());
+        preg_match('~https?://[^\\s]+~', $mail->getTextBody(), $matches);
+        $newUrl = $matches[0];
+        $row = $this->connection->fetchAssociative('SELECT * FROM reservation WHERE id = ?', [$this->booking]);
+        self::assertSame($owner->getId(), (int) $row['user_id']);
+        self::assertSame('client@example.com', $this->connection->fetchOne('SELECT email FROM "user" WHERE id = ?', [$owner->getId()]));
+        self::assertSame('ABCDEF0123456789', $row['reference']);
+        self::assertSame(86000, (int) $row['total_amount_cents']);
+        self::assertSame(86, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM reserved_seat WHERE reservation_id = ? AND released_at IS NULL', [$this->booking]));
+        self::assertNotSame(str_repeat('a', 32), $row['confirmation_key']);
+        self::assertNotNull($row['access_version']);
+        $management = static::getContainer()->get(\App\Service\ReservationManagement::class);
+        try {
+            $management->consult($row['reference'], parse_url($oldUrl, PHP_URL_QUERY), null);
+            self::fail('L’ancien lien doit être refusé.');
+        } catch (\App\Exception\ReservationProblem $problem) {
+            self::assertSame(403, $problem->getCode());
+        }
+        self::assertSame('nouvelle@example.com', $management->consult($row['reference'], parse_url($newUrl, PHP_URL_QUERY), null)['email']);
+        self::assertSame('nouvelle@example.com', $management->consult($row['reference'], '', $owner)['email']);
+        $this->client->loginUser($owner);
+        $this->client->request('GET', '/api/account/reservations');
+        self::assertCount(2, json_decode($this->client->getResponse()->getContent(), true)['reservations']);
+    }
+
+    public function testEmailCorrectionChecksPermissionsIdentityAndCsrf(): void
+    {
+        $this->correctEmail();
+        self::assertResponseStatusCodeSame(401);
+        $this->login('ROLE_USER');
+        $this->correctEmail();
+        self::assertResponseStatusCodeSame(403);
+        $this->login('ROLE_EMPLOYEE');
+        $this->correctEmail([], false);
+        self::assertResponseStatusCodeSame(403);
+        foreach ([['requesterVerified' => false], ['firstName' => 'Inconnu'], ['lastName' => 'Inconnu'], ['email' => 'invalide'], ['email' => 'client@example.com']] as $data) {
+            $this->correctEmail($data);
+            self::assertResponseStatusCodeSame(422);
+        }
+        $this->correctEmail(['expectedEmail' => 'ancienne@example.com']);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('client@example.com', $this->connection->fetchOne('SELECT email FROM reservation WHERE id = ?', [$this->booking]));
+    }
+
+    public function testCancelledReservationCannotHaveItsEmailCorrected(): void
+    {
+        $this->login('ROLE_DIRECTOR');
+        $this->connection->update('reservation', ['status' => 'cancelled'], ['id' => $this->booking]);
+        $this->correctEmail();
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('client@example.com', $this->connection->fetchOne('SELECT email FROM reservation WHERE id = ?', [$this->booking]));
+    }
+
+    public function testMailFailureKeepsTheCorrectedEmailAndAllowsLaterRetrieval(): void
+    {
+        $this->login('ROLE_EMPLOYEE');
+        $mailer = $this->createStub(\Symfony\Component\Mailer\MailerInterface::class);
+        $mailer->method('send')->willThrowException(new \Symfony\Component\Mailer\Exception\TransportException('Panne simulée'));
+        static::getContainer()->set(\Symfony\Component\Mailer\MailerInterface::class, $mailer);
+        $result = $this->correctEmail();
+        self::assertResponseIsSuccessful();
+        self::assertFalse($result['emailSent']);
+        self::assertSame('nouvelle@example.com', $this->connection->fetchOne('SELECT email FROM reservation WHERE id = ?', [$this->booking]));
+        self::assertSame('confirmed', $this->connection->fetchOne('SELECT status FROM reservation WHERE id = ?', [$this->booking]));
+    }
+
     private function reservation(string $reference, string $status): int
     {
         return $this->insert('reservation', [
