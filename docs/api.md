@@ -51,7 +51,7 @@ Cet exemple utilise les données fictives de démonstration. Les identifiants et
 
 Une place libérée et une réservation annulée ne sont pas comptées comme occupées. Une place réservée pour une autre séance ne réduit pas les disponibilités de cette séance.
 
-La réponse porte l’en-tête `Cache-Control: no-store`. React redemande la programmation toutes les 30 secondes. Ce rafraîchissement ne bloque pas les sièges et ne remplace pas le contrôle qui sera effectué à la confirmation d’une réservation.
+La réponse porte l’en-tête `Cache-Control: no-store`. React redemande la programmation toutes les 30 secondes. Ce rafraîchissement ne bloque pas les sièges et ne remplace pas le contrôle effectué à la confirmation d’une réservation.
 
 ### Programmation vide et erreurs
 
@@ -95,7 +95,7 @@ Le nom et le prénom sont obligatoires et limités à 100 caractères chacun. Le
 
 Les erreurs de validation sont regroupées par champ dans `errors`. Le mot de passe et son empreinte ne sont jamais renvoyés. Le rôle client est attribué par Symfony. Un champ `roles` envoyé dans la demande est refusé.
 
-Le compte est enregistré sans date de vérification du mail et sans ouvrir de session. Un mail contient le lien d’activation valable une heure. Si le service mail échoue, le compte reste enregistré et la réponse contient `emailSent: false`. Le formulaire React est accessible sur `/inscription`. Ces routes ne sont pas encore déployées.
+Le compte est enregistré sans date de vérification du mail et sans ouvrir de session. Un mail contient le lien d’activation valable une heure. Si le service mail échoue, le compte reste enregistré et la réponse contient `emailSent: false`. Le formulaire React est accessible sur `/inscription`.
 
 ## Vérifier une adresse mail
 
@@ -115,7 +115,7 @@ Une activation réussie enregistre `emailVerifiedAt` en UTC. Elle n’ouvre pas 
 
 `POST /api/resend-verification`
 
-Envoyer un objet JSON avec le champ `email`. Un compte existant dont le mail n’est pas vérifié reçoit un nouveau lien valable une heure. Aucun nouveau compte n’est créé. Un ancien lien encore valide reste utilisable jusqu’à son expiration ; après activation, les liens ne modifient plus le compte.
+Envoyer un objet JSON avec le champ `email`. Un compte existant dont le mail n’est pas vérifié reçoit un nouveau lien valable une heure. Aucun nouveau compte n’est créé. Chaque nouvel envoi remplace le lien précédent. Après activation, les liens ne modifient plus le compte.
 
 Une réponse `202` affiche le même message pour un compte absent, déjà vérifié ou en attente. Un mail invalide renvoie `422`, un JSON invalide `400` et un format autre que JSON `415`. Une panne du service mail renvoie `503`.
 
@@ -218,7 +218,7 @@ Les dates `confirmation_email_attempted_at` et `confirmation_email_sent_at` suiv
 
 ## Consulter et annuler une réservation
 
-`GET /api/reservations/{reference}` renvoie le récapitulatif et le statut. L’accès exige soit le lien signé reçu par mail, soit une session dont l’adresse vérifiée correspond à celle de la réservation. Cela permet aussi à un compte créé après une réservation sans compte de la retrouver avec la même adresse vérifiée.
+`GET /api/reservations/{reference}` renvoie le récapitulatif et le statut. L’accès exige soit le lien signé reçu par mail, soit une session vérifiée du compte propriétaire. Pour une réservation sans compte, l’adresse vérifiée doit correspondre à celle de la réservation. Cela permet aussi à un compte créé après une réservation sans compte de la retrouver avec la même adresse vérifiée.
 
 La confirmation fournit `managementUrl`, également inclus dans le mail. Le lien pointe vers `/reservations/{reference}`. Sa signature couvre l’adresse configurée, la référence et l’expiration. Il reste valable 30 jours après la séance. Le navigateur transmet sa chaîne de paramètres telle quelle à l’API. Une référence seule ne donne aucun accès et une signature modifiée ou expirée est refusée en `403`. Pour un compte connecté sans lien, une réservation d’un autre client renvoie `404`.
 
@@ -238,16 +238,16 @@ Un nouvel essai d’annulation ne modifie pas les places reprises entre-temps pa
 
 ## Historique du compte client
 
-`GET /api/account/reservations?page=1` exige un compte connecté avec une adresse vérifiée. Symfony sélectionne les réservations à cette adresse, y compris celles effectuées sans compte avant l’inscription. Un paramètre d’adresse mail envoyé par le navigateur ne change pas cette sélection.
+`GET /api/account/reservations?page=1` exige un compte connecté avec une adresse vérifiée. Symfony sélectionne les réservations rattachées au compte et celles sans compte effectuées à son adresse vérifiée. Un paramètre d’adresse mail envoyé par le navigateur ne change pas cette sélection.
 
 La réponse contient `reservations`, `page` et `hasMore`. Chaque réservation fournit sa référence, son statut, le film, la salle, la date de séance, les sièges et le total enregistré. Les résultats sont triés par date de séance décroissante, puis par identifiant décroissant, avec 20 réservations par page. Les réservations annulées restent dans l’historique. Le champ `cancellationOrigin` vaut `client` ou `cinema`. Il reste `null` pour une ancienne annulation dont l’origine est inconnue. Une annulation de séance conserve l’origine des réservations déjà annulées par leur client.
 
-Un visiteur reçoit `401`, un compte non vérifié `403` et un numéro de page invalide `422`. La réponse n’est pas mise en cache. Le lien du compte vers `/reservations/{reference}` utilise la session ; le détail vérifie à nouveau que la réservation appartient à cette adresse.
+Un visiteur reçoit `401`, un compte non vérifié `403` et un numéro de page invalide `422`. La réponse n’est pas mise en cache. Le lien du compte vers `/reservations/{reference}` utilise la session ; le détail contrôle à nouveau les droits du compte sur cette réservation.
 
 
 ## Télécharger la confirmation PDF
 
-`GET /api/reservations/{reference}/pdf` reprend le contrôle d’accès du récapitulatif. Un client connecté doit avoir la même adresse vérifiée que celle de la réservation. Sans compte, les paramètres du lien signé reçu par mail doivent être conservés.
+`GET /api/reservations/{reference}/pdf` reprend le contrôle d’accès du récapitulatif. Un client connecté doit être autorisé à consulter cette réservation, selon les mêmes règles que pour le récapitulatif. Sans compte, les paramètres du lien signé reçu par mail doivent être conservés.
 
 Une réservation confirmée renvoie `200`, un contenu `application/pdf` et un téléchargement nommé `reservation-{reference}.pdf`. Une réservation annulée renvoie `409` au format JSON. Les refus d’accès restent `403` ou `404`, comme pour le récapitulatif.
 
@@ -287,7 +287,7 @@ Les deux écritures utilisent `multipart/form-data` avec le jeton `X-CSRF-Token`
 
 Réponses d’écriture : `201` à la création, `200` après modification, `422` pour un formulaire ou un fichier invalide, `404` si le film est introuvable, `409` si la nouvelle durée crée un conflit de programmation, `503` si l’enregistrement échoue. Les plafonds des textes sont de 255 caractères pour le titre, 20 000 pour le synopsis et 5 000 pour les acteurs.
 
-Les écritures de programmation utilisent le verrou transactionnel PostgreSQL `7812601` pour vérifier les chevauchements sans modifications concurrentes. La gestion des séances devra utiliser ce même verrou.
+Les écritures de programmation utilisent le verrou transactionnel PostgreSQL `7812601` pour vérifier les chevauchements sans modifications concurrentes. La gestion des séances utilise ce même verrou.
 
 
 ## Gestion des séances
@@ -320,6 +320,6 @@ La correction conserve le compte propriétaire, les sièges, la référence et l
 
 L’inscription, la réinitialisation et la création interne du personnel refusent une liste de mots de passe courants et vérifient les fuites connues via Pwned Passwords. Seuls les cinq premiers caractères du hachage SHA-1 sont envoyés au service. La comparaison du reste se fait côté Symfony. Ce hachage de recherche ne remplace pas le hachage sécurisé du mot de passe enregistré.
 
-Le contrôle attend au maximum cinq secondes. Une indisponibilité demande de réessayer et ne valide pas silencieusement le mot de passe. Les tests utilisent des réponses simulées.
+Le contrôle attend au maximum cinq secondes. Si le service est indisponible, l’utilisateur doit réessayer pour faire vérifier son mot de passe. Les tests utilisent des réponses simulées.
 
 Après un blocage de connexion, le titulaire d’un compte vérifié reçoit une alerte avec un lien vers la demande de réinitialisation. L’alerte est limitée à une par adresse sur quinze minutes. Elle ne contient aucun mot de passe. Un échec de transport ne débloque pas la connexion et ne révèle pas l’existence du compte.

@@ -204,7 +204,9 @@ class ReservationControllerTest extends WebTestCase
         $mailer = $this->createMock(MailerInterface::class);
         $mailer->expects($this->exactly(2))->method('send')->willReturnCallback(static function () use (&$calls): void {
             ++$calls;
-            if ($calls === 1) throw new TransportException('Panne simulée');
+            if ($calls === 1) {
+                throw new TransportException('Panne simulée');
+            }
         });
         static::getContainer()->set(MailerInterface::class, $mailer);
         $data = $this->requestData();

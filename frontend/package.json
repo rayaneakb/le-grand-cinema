@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:real": "php ../backend/bin/run-browser-check.php"
   },
   "dependencies": {
     "react": "^19.3.1",

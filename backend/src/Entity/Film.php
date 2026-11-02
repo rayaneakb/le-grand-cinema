@@ -158,7 +158,6 @@ class Film
     public function removeScreening(Screening $screening): static
     {
         if ($this->screenings->removeElement($screening)) {
-            // set the owning side to null (unless already changed)
             if ($screening->getFilm() === $this) {
                 $screening->setFilm(null);
             }

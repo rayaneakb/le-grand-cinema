@@ -390,7 +390,7 @@ footer {
   max-width: 100%;
 }
 
-.film-fields input[type="checkbox"] {
+.film-fields input[type='checkbox'] {
   width: auto;
 }
 

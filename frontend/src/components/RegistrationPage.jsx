@@ -116,7 +116,7 @@ export default function RegistrationPage() {
           <>
             <p>
               Retrouvez vos réservations depuis votre compte. La réservation
-              sans compte restera possible.
+              sans compte est aussi possible.
             </p>
             <form
               className="account-form"

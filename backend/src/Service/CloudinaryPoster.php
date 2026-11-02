@@ -65,7 +65,9 @@ class CloudinaryPoster
     public function remove(string $id): bool
     {
         // Les affiches de démonstration et les médias hors du projet sont conservés.
-        if (!str_starts_with($id, 'le-grand-cinema/posters/')) return true;
+        if (!str_starts_with($id, 'le-grand-cinema/posters/')) {
+            return true;
+        }
         try {
             $data = $this->http->request('POST', $this->endpoint('destroy'), [
                 'auth_basic' => [$this->key, $this->secret],
@@ -74,7 +76,9 @@ class CloudinaryPoster
                 'timeout' => 5,
                 'max_duration' => 8,
             ])->toArray();
-            if (in_array($data['result'] ?? '', ['ok', 'not found'], true)) return true;
+            if (in_array($data['result'] ?? '', ['ok', 'not found'], true)) {
+                return true;
+            }
         } catch (\Throwable) {
         }
         $this->logger->warning('Une ancienne affiche Cloudinary reste à supprimer.', ['publicId' => $id]);

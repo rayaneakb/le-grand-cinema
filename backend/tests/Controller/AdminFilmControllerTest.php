@@ -29,7 +29,9 @@ class AdminFilmControllerTest extends WebTestCase
         $this->client = self::createClient();
         $this->client->disableReboot();
         $this->db = self::getContainer()->get(Connection::class);
-        if (!str_ends_with($this->db->getDatabase(), '_test')) throw new \RuntimeException('Base _test obligatoire.');
+        if (!str_ends_with($this->db->getDatabase(), '_test')) {
+            throw new \RuntimeException('Base _test obligatoire.');
+        }
         $this->db->beginTransaction();
         $http = new MockHttpClient(function ($method, $url, $options) {
             $this->calls[] = $url;
@@ -62,7 +64,9 @@ class AdminFilmControllerTest extends WebTestCase
 
     protected function tearDown(): void
     {
-        if (isset($this->db) && $this->db->isTransactionActive()) $this->db->rollBack();
+        if (isset($this->db) && $this->db->isTransactionActive()) {
+            $this->db->rollBack();
+        }
         if (isset($this->image)) @unlink($this->image);
         parent::tearDown();
     }

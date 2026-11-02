@@ -61,7 +61,9 @@ class ReservationManagementControllerTest extends WebTestCase
 
     protected function tearDown(): void
     {
-        if (isset($this->connection) && $this->connection->isTransactionActive()) $this->connection->rollBack();
+        if (isset($this->connection) && $this->connection->isTransactionActive()) {
+            $this->connection->rollBack();
+        }
         parent::tearDown();
     }
 
@@ -321,7 +323,9 @@ class ReservationManagementControllerTest extends WebTestCase
     {
         $user = (new User())->setFirstName('Élodie')->setLastName('Martin')
             ->setEmail('elodie@example.com')->setPassword('hash-test');
-        if ($verified) $user->setEmailVerifiedAt(new \DateTimeImmutable());
+        if ($verified) {
+            $user->setEmailVerifiedAt(new \DateTimeImmutable());
+        }
         $manager = static::getContainer()->get(EntityManagerInterface::class);
         $manager->persist($user);
         $manager->flush();

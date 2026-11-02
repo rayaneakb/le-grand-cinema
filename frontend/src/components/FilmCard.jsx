@@ -1,8 +1,9 @@
 export default function FilmCard({ film, dateKey, onSelectScreening }) {
   const screenings = film.screenings.filter(
     (screening) =>
-      new Date(screening.startsAt).toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }) ===
-      dateKey,
+      new Date(screening.startsAt).toLocaleDateString('en-CA', {
+        timeZone: 'Europe/Paris',
+      }) === dateKey,
   )
   const duration = `${Math.floor(film.durationMinutes / 60)} h ${String(film.durationMinutes % 60).padStart(2, '0')}`
 
@@ -42,7 +43,9 @@ export default function FilmCard({ film, dateKey, onSelectScreening }) {
               </button>
             ))
           ) : (
-            <p className="empty-state">Aucune séance disponible pour le moment.</p>
+            <p className="empty-state">
+              Aucune séance disponible pour le moment.
+            </p>
           )}
         </div>
       </div>

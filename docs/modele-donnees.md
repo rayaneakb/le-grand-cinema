@@ -160,7 +160,7 @@ Les séances, réservations et sièges référencés dans l’historique ne sont
 
 La table `screening_notice` conserve les notifications de changement d’horaire et d’annulation de séance. Chaque notification est liée à une réservation. Elle contient son objet, son texte, sa date de création, la dernière tentative et la date d’envoi. Une notification non envoyée reste disponible pour une nouvelle tentative depuis l’administration.
 
-La table `sessions` conserve les sessions Symfony en production. Elle est gérée par le gestionnaire de sessions et exclue du modèle ORM. Les liens d’activation, de réinitialisation et d’accès aux réservations sont signés et ont une date d’expiration. Aucun mot de passe en clair n’est stocké pour ces liens.
+La table `sessions` conserve les sessions Symfony en production. Elle est gérée par le gestionnaire de sessions et exclue du modèle ORM. Les liens d’activation, de réinitialisation et d’accès aux réservations sont signés et ont une date d’expiration.
 
 ## Vérifications
 

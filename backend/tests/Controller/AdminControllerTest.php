@@ -48,7 +48,9 @@ class AdminControllerTest extends WebTestCase
 
     protected function tearDown(): void
     {
-        if (isset($this->connection) && $this->connection->isTransactionActive()) $this->connection->rollBack();
+        if (isset($this->connection) && $this->connection->isTransactionActive()) {
+            $this->connection->rollBack();
+        }
         parent::tearDown();
     }
 

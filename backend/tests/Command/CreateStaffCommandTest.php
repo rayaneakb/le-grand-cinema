@@ -24,13 +24,17 @@ class CreateStaffCommandTest extends KernelTestCase
     {
         self::bootKernel();
         $this->connection = static::getContainer()->get(Connection::class);
-        if (!str_ends_with($this->connection->getDatabase(), '_test')) throw new \RuntimeException('Une base _test est obligatoire.');
+        if (!str_ends_with($this->connection->getDatabase(), '_test')) {
+            throw new \RuntimeException('Une base _test est obligatoire.');
+        }
         $this->connection->beginTransaction();
     }
 
     protected function tearDown(): void
     {
-        if ($this->connection->isTransactionActive()) $this->connection->rollBack();
+        if ($this->connection->isTransactionActive()) {
+            $this->connection->rollBack();
+        }
         parent::tearDown();
     }
 

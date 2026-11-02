@@ -51,7 +51,9 @@ class CreateStaffCommand extends Command
         });
         $errors = $this->validator->validate(compact('email', 'firstName', 'lastName', 'password'));
         if ($errors !== []) {
-            foreach ($errors as $messages) $io->error(implode(' ', $messages));
+            foreach ($errors as $messages) {
+                $io->error(implode(' ', $messages));
+            }
 
             return Command::INVALID;
         }

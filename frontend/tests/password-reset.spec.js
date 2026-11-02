@@ -48,7 +48,9 @@ test('le nouveau mot de passe et le lien sont transmis puis la connexion est pro
   })
   await page.goto('/reinitialiser-mot-de-passe?id=1&_hash=test')
   await expect(page).toHaveURL(/\/reinitialiser-mot-de-passe$/)
-  await page.getByLabel('Nouveau mot de passe', { exact: true }).fill('un nouveau mot de passe')
+  await page
+    .getByLabel('Nouveau mot de passe', { exact: true })
+    .fill('un nouveau mot de passe')
   await page.getByRole('button', { name: 'Modifier mon mot de passe' }).click()
   await expect(page.getByRole('status')).toContainText(
     'Votre mot de passe est modifié',
@@ -56,7 +58,9 @@ test('le nouveau mot de passe et le lien sont transmis puis la connexion est pro
   await expect(
     page.getByRole('link', { name: 'Se connecter', exact: true }),
   ).toBeVisible()
-  await expect(page.getByLabel('Nouveau mot de passe', { exact: true })).toHaveCount(0)
+  await expect(
+    page.getByLabel('Nouveau mot de passe', { exact: true }),
+  ).toHaveCount(0)
 })
 
 test('un lien refusé permet de demander un nouveau lien', async ({ page }) => {
@@ -70,7 +74,9 @@ test('un lien refusé permet de demander un nouveau lien', async ({ page }) => {
     }),
   )
   await page.goto('/reinitialiser-mot-de-passe?id=1&_hash=test')
-  await page.getByLabel('Nouveau mot de passe', { exact: true }).fill('un nouveau mot de passe')
+  await page
+    .getByLabel('Nouveau mot de passe', { exact: true })
+    .fill('un nouveau mot de passe')
   await page.getByRole('button', { name: 'Modifier mon mot de passe' }).click()
   await expect(page.getByRole('alert')).toContainText(
     'Ce lien est invalide ou a expiré',

@@ -6,27 +6,31 @@
 | --- | --- | --- |
 | PHPUnit | Validation des données, API, permissions et règles de réservation sur PostgreSQL | `php bin/phpunit` depuis `backend` |
 | Playwright | Parcours React dans Chromium avec réponses de l’API simulées | `npm run test:e2e` depuis `frontend` |
+| Playwright avec Symfony | Réservation, PDF, annulation, historique et droits avec une base temporaire | `npm run test:real` depuis `frontend` |
 | Oxlint | Analyse du code JavaScript et React | `npm run lint` depuis `frontend` |
 | Vite | Compilation du frontend | `npm run build` depuis `frontend` |
 | Doctrine | Correspondance entre les entités et le schéma installé | `php bin/console doctrine:schema:validate` depuis `backend` |
 
 Les tests unitaires de `RegistrationValidatorTest` vérifient les champs d’inscription sans démarrer Symfony ni utiliser la base. Les tests de contrôleurs et de services vérifient les échanges avec Symfony et PostgreSQL. Les tests de concurrence lancent deux processus PHP séparés sur une base dédiée.
 
-Les tests Playwright actuels contrôlent l’interface avec des réponses simulées. Ils ne prouvent pas à eux seuls que le parcours fonctionne avec le serveur réel. Les essais manuels complètent ces contrôles, notamment pour les mails Brevo et les affiches Cloudinary.
+La suite de 79 tests contrôle les états de l’interface avec une API simulée. Trois tests supplémentaires exécutent le parcours avec React, Symfony et PostgreSQL, sans intercepter les réponses. Les essais manuels complètent ces contrôles pour les mails Brevo et les affiches Cloudinary.
+
+La commande `npm run test:real` crée une base locale temporaire, applique les migrations et prépare un film, une salle et trois comptes fictifs. Les mails sont désactivés. Après les essais, elle vérifie les montants et la libération des sièges, puis supprime uniquement cette base. Les ports 8003 et 5175 doivent être libres. Le rôle PostgreSQL doit pouvoir créer une base, ou utiliser `PG_ADMIN_USER=rayane npm run test:real` sur le poste de développement.
+
+Les trois tests ont réussi le 2 novembre 2026. Ils vérifient la réservation sans compte, le téléchargement d’un PDF réel, l’annulation, la récupération de cette réservation après connexion, la recherche au guichet et les droits de modification du tarif et de consultation des statistiques.
 
 ## Couverture PHP
 
-Mesure locale du 1er novembre 2026, sur l’ensemble de `backend/src`, avec PHP 8.4.25, PHPUnit 13.4.5 et PCOV 1.0.12.
+Mesure locale du 2 novembre 2026, sur l’ensemble de `backend/src`, avec PHP 8.4.25, PHPUnit 13.4.5 et PCOV 1.0.12.
 
 | Mesure | Résultat |
 | --- | --- |
-| Tests PHP | 103 réussis |
-| Assertions | 548 |
-| Lignes exécutées | 1 066 sur 1 400, soit 76,14 % |
-| Méthodes entièrement couvertes | 95 sur 226, soit 42,03 % |
-| Classes entièrement couvertes | 15 sur 50, soit 30 % |
+| Tests PHP | 116 réussis |
+| Assertions | 615 |
+| Lignes exécutées | 1 230 sur 1 596, soit 77,06 % |
+| Méthodes entièrement couvertes | 100 sur 239, soit 41,84 % |
 
-Cette mesure regroupe les tests unitaires et les tests d’intégration. Les fichiers non exécutés restent dans le calcul. La gestion des réservations atteint 100 % de lignes exécutées ; la confirmation des réservations atteint 92,92 %. Cela ne signifie pas que tous les comportements possibles sont vérifiés. PCOV mesure les lignes, sans mesurer les branches et les chemins. Le code exécuté dans les processus PHP enfants n’est pas collecté dans ce rapport.
+Cette mesure regroupe les tests unitaires et les tests d’intégration. Les fichiers non exécutés restent dans le calcul. PCOV mesure les lignes exécutées, sans couvrir tous les chemins possibles. Le code des processus PHP enfants utilisés pour la concurrence n’est pas collecté dans ce rapport.
 
 Pour générer les rapports avec PCOV déjà chargé dans PHP, depuis `backend` :
 
@@ -56,7 +60,7 @@ La confirmation verrouille la séance, relit les disponibilités et enregistre l
 
 Pendant l’essai de création des séances, un horaire trop proche d’une séance existante était refusé, mais le message apparaissait après toute la liste. L’utilisateur pouvait penser que le bouton ne fonctionnait pas.
 
-Le message se trouve désormais sous le bouton d’enregistrement, avant les résultats. Le focus et le défilement permettent de le retrouver après la réponse du serveur. Le formulaire conserve les valeurs saisies pour les corriger.
+Le message apparaît dans la modale, sous le bouton d’enregistrement. Le formulaire conserve les valeurs saisies pour les corriger.
 
 Le test Playwright « un conflit reste visible dans la modale avec l’horaire saisi » reproduit ce cas avec douze séances affichées. Il vérifie que le message est visible dans la fenêtre et que l’horaire saisi est conservé.
 
@@ -100,7 +104,7 @@ Résultats du 1er novembre 2026 :
 | Réservations de test encore actives | 0 |
 | Incohérences de montant, de salle ou de séance | 0 |
 
-Les seuils k6 sont respectés. Les réponses de conflit attendues ne sont pas classées comme des erreurs HTTP, mais leur contenu est contrôlé. Ces mesures concernent les réponses de l’API sur le poste local, sans réseau distant ni affichage React. Elles ne démontrent pas la capacité de l’offre gratuite Render. Le chargement complet de la page et le réveil du serveur distant restent à mesurer séparément.
+Les seuils k6 sont respectés. Les réponses de conflit attendues ne sont pas classées comme des erreurs HTTP, mais leur contenu est contrôlé. Ces mesures concernent les réponses de l’API sur le poste local, sans réseau distant ni affichage React. Elles ne démontrent pas la capacité de l’offre gratuite Render. Le chargement complet de la page est mesuré séparément ci-dessous.
 
 Le premier essai a été écarté, car les journaux avaient bloqué la sortie du serveur de test. Après correction du dispositif, l’essai ci-dessus a été exécuté sur une nouvelle copie de la base.
 
@@ -115,3 +119,9 @@ Les formulaires des films et des séances s’ouvrent dans une modale. Les tests
 La recette `responsive.spec.js` parcourt les pages à 320, 390, 768 et 1 440 pixels de large dans Chromium. Elle utilise des noms, une adresse mail, un titre et un synopsis longs. Elle couvre la programmation, la connexion, l’inscription, l’activation, les mots de passe, le compte, la réservation et son annulation, les étapes de sélection jusqu’à la confirmation, ainsi que les résultats et les modales de l’administration.
 
 Les contrôles vérifient l’absence de débordement horizontal de la page et des modales, ainsi que l’accès aux boutons d’enregistrement et de fermeture. Un débordement des listes déroulantes avec les longs titres a été corrigé pendant cette recette. Les réponses de l’API sont simulées. Ces essais utilisent des tailles de fenêtre, sans reproduire un appareil physique ni Safari.
+
+## Chargement du site déployé
+
+Le 2 novembre 2026, vingt navigations à chaud ont été mesurées dans Chromium à 1 440 × 900 pixels, sur le site Render. Le chronométrage s’arrête quand la programmation, les polices et les affiches visibles sont chargées. Les vingt chargements sont sous trois secondes, avec un p95 de 821 ms. Le premier chargement réussi de cette série a pris 1 139 ms.
+
+Un essai précédent a renvoyé HTTP 503 avant cette série. Sa cause n’est pas établie et le temps de réveil après mise en veille n’a pas été mesuré. Le seuil à chaud est respecté sur cet échantillon, sans limitation réseau ni utilisateurs concurrents. Ce contrôle ne garantit pas une disponibilité permanente du service gratuit.

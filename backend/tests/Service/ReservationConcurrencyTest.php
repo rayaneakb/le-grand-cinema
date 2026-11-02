@@ -30,10 +30,14 @@ class ReservationConcurrencyTest extends KernelTestCase
     protected function tearDown(): void
     {
         foreach ($this->processes as $process) {
-            if ($process->isRunning()) $process->stop(0);
+            if ($process->isRunning()) {
+                $process->stop(0);
+            }
         }
         if (isset($this->connection)) {
-            if ($this->connection->isTransactionActive()) $this->connection->rollBack();
+            if ($this->connection->isTransactionActive()) {
+                $this->connection->rollBack();
+            }
             if (isset($this->ids['screening'])) {
                 $this->connection->delete('reserved_seat', ['screening_id' => $this->ids['screening']]);
                 $this->connection->delete('reservation', ['screening_id' => $this->ids['screening']]);
@@ -43,8 +47,12 @@ class ReservationConcurrencyTest extends KernelTestCase
                 $this->connection->delete('seat', ['room_id' => $this->ids['room']]);
                 $this->connection->delete('room', ['id' => $this->ids['room']]);
             }
-            if (isset($this->ids['film'])) $this->connection->delete('film', ['id' => $this->ids['film']]);
-            if ($this->createdSettings) $this->connection->delete('cinema_settings', ['id' => 1]);
+            if (isset($this->ids['film'])) {
+                $this->connection->delete('film', ['id' => $this->ids['film']]);
+            }
+            if ($this->createdSettings) {
+                $this->connection->delete('cinema_settings', ['id' => 1]);
+            }
         }
         parent::tearDown();
     }

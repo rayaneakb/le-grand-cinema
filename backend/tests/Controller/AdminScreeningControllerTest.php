@@ -29,13 +29,17 @@ class AdminScreeningControllerTest extends WebTestCase
         $this->client = self::createClient();
         $this->client->disableReboot();
         $this->db = self::getContainer()->get(Connection::class);
-        if (!str_ends_with($this->db->getDatabase(), '_test')) throw new \RuntimeException('Base _test obligatoire.');
+        if (!str_ends_with($this->db->getDatabase(), '_test')) {
+            throw new \RuntimeException('Base _test obligatoire.');
+        }
         $this->db->beginTransaction();
         $this->clock = new MockClock('2030-01-01 12:00:00 UTC');
         self::getContainer()->set(ClockInterface::class, $this->clock);
         $mailer = $this->createStub(MailerInterface::class);
         $mailer->method('send')->willReturnCallback(function ($message): void {
-            if ($this->mailFails) throw new TransportException('Service mail simulé indisponible.');
+            if ($this->mailFails) {
+                throw new TransportException('Service mail simulé indisponible.');
+            }
             $this->sent[] = $message;
         });
         self::getContainer()->set(MailerInterface::class, $mailer);
@@ -45,7 +49,9 @@ class AdminScreeningControllerTest extends WebTestCase
 
     protected function tearDown(): void
     {
-        if (isset($this->db) && $this->db->isTransactionActive()) $this->db->rollBack();
+        if (isset($this->db) && $this->db->isTransactionActive()) {
+            $this->db->rollBack();
+        }
         parent::tearDown();
     }
 
