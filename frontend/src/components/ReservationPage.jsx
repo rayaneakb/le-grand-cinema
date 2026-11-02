@@ -1,4 +1,5 @@
 import { cancellationMessage } from '../utils/cancellationMessage'
+import ReservationPdfButton from './ReservationPdfButton'
 import { useEffect, useState } from 'react'
 
 export default function ReservationPage({ reference }) {
@@ -143,7 +144,7 @@ export default function ReservationPage({ reference }) {
               </dd>
             </dl>
             {booking.status === 'confirmed' ? (
-              
+              <ReservationPdfButton reference={reference} query={query} />
             ) : (
               <p>
                 Le téléchargement du PDF n’est plus disponible pour cette

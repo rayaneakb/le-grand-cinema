@@ -27,6 +27,27 @@ class ReservationManagementController
         }
     }
 
+    #[Route('/api/reservations/{reference}/pdf', name: 'api_reservation_pdf', requirements: ['reference' => '[A-F0-9]{16}'], methods: ['GET'])]
+    public function pdf(Request $request, string $reference, ReservationManagement $management, ReservationPdf $pdf, #[CurrentUser] ?User $user): Response
+    {
+        try {
+            $booking = $management->consult($reference, $request->server->get('QUERY_STRING', ''), $user);
+            if ($booking['status'] !== 'confirmed') {
+                return $this->respond(['message' => 'Cette réservation est annulée. Vous ne pouvez plus télécharger sa confirmation PDF.'], 409);
+            }
+        } catch (ReservationProblem $problem) {
+            return $this->respond(['message' => $problem->getMessage()], $problem->getCode());
+        }
+
+        return new Response($pdf->generate($booking), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => HeaderUtils::makeDisposition('attachment', 'reservation-' . $reference . '.pdf'),
+            'Cache-Control' => 'no-store, private',
+            'Referrer-Policy' => 'no-referrer',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     #[Route('/api/reservations/{reference}/cancel', name: 'api_reservation_cancel', requirements: ['reference' => '[A-F0-9]{16}'], methods: ['POST'])]
     public function cancel(Request $request, string $reference, ReservationManagement $management, CsrfTokenManagerInterface $csrf, #[CurrentUser] ?User $user): JsonResponse
     {

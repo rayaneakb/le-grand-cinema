@@ -1,3 +1,4 @@
+import ReservationPdfButton from './ReservationPdfButton'
 import {
   readBookingDraft,
   saveBookingDraft,
@@ -391,7 +392,13 @@ export default function SeatSelectionPage({ screeningId, user }) {
           </dl>
           <p>Conservez cette référence pour votre passage au guichet.</p>
           {confirmation.managementUrl && (
-            
+            <ReservationPdfButton
+              reference={confirmation.reference}
+              query={
+                new URL(confirmation.managementUrl, window.location.origin)
+                  .search
+              }
+            />
           )}
           {confirmation.managementUrl && (
             <a className="account-back" href={confirmation.managementUrl}>
