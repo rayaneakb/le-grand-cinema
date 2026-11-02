@@ -69,6 +69,7 @@ class ReservationConfirmationMailer
         $date = (new \DateTimeImmutable($booking['startsAt']))->setTimezone(new \DateTimeZone('Europe/Paris'));
         $total = number_format($booking['totalAmountCents'] / 100, 2, ',', ' ');
         $count = count($booking['seats']);
+        $cancelled = ($booking['status'] ?? 'confirmed') === 'cancelled';
 
         return (new Email())
             ->from(Address::create($this->sender))
@@ -77,17 +78,20 @@ class ReservationConfirmationMailer
             ->subject('Votre réservation au Grand Cinéma — ' . $booking['reference'])
             ->text(
                 'Bonjour ' . $booking['firstName'] . ",\n\n"
-                . (($booking['status'] ?? 'confirmed') === 'cancelled' ? "Votre réservation est annulée.\n\n" : "Votre réservation est confirmée.\n\n")
+                . ($cancelled ? "Votre réservation est annulée.\n\n" : "Votre réservation est confirmée.\n\n")
                 . 'Numéro de réservation : ' . $booking['reference'] . "\n"
                 . 'Film : ' . $booking['filmTitle'] . "\n"
                 . 'Séance : ' . $date->format('d/m/Y à H:i') . " (heure de Paris)\n"
                 . 'Salle : ' . $booking['room'] . "\n"
                 . 'Nom : ' . $booking['firstName'] . ' ' . $booking['lastName'] . "\n"
                 . 'Places : ' . $count . ' — ' . implode(', ', $booking['seats']) . "\n"
-                . 'Total à régler au cinéma : ' . $total . " €\n\n"
-                . "Le paiement s’effectue au cinéma. Présentez votre référence au guichet.\n"
-                . "Merci d’arriver environ 20 minutes avant le début de la séance.\n\n"
-                . "Consulter ou annuler votre réservation (jusqu’à deux heures avant la séance) :\n"
+                . ($cancelled
+                    ? "Aucun montant n’est à régler pour cette réservation annulée.\n\nConsulter votre réservation annulée :\n"
+                    : 'Total à régler au cinéma : ' . $total . " €\n\n"
+                        . "Le paiement s’effectue au cinéma. Présentez votre référence au guichet.\n"
+                        . "Merci d’arriver environ 20 minutes avant le début de la séance.\n\n"
+                        . "Consulter ou annuler votre réservation (jusqu’à deux heures avant la séance) :\n"
+                )
                 . $this->access->createUrl($booking) . "\n\n"
                 . "Ce lien personnel reste valable 30 jours après la séance. Ne le partagez pas.\n\n"
                 . "Le Grand Cinéma"
