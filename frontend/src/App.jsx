@@ -1,4 +1,5 @@
-
+import ActivationPage from './components/ActivationPage'
+import RegistrationPage from './components/RegistrationPage'
 import './App.css'
 import './Account.css'
 
@@ -14,7 +15,7 @@ export default function App() {
           <a href="/">À l’affiche</a>
         </nav>
       </header>
-      {<main id="compte"><h1>Le Grand Cinéma</h1></main>}
+      {path === '/inscription' ? <RegistrationPage /> : (path === '/activation' ? <ActivationPage /> : (<main id="compte"><h1>Le Grand Cinéma</h1></main>))}
     </>
   )
 }
