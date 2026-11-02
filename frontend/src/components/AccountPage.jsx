@@ -1,3 +1,4 @@
+import AccountReservations from './AccountReservations'
 import useLogout from '../hooks/useLogout'
 
 export default function AccountPage({ session }) {
@@ -40,7 +41,11 @@ export default function AccountPage({ session }) {
           </>
         )}
       </section>
-
+      {session.user && !session.loading && (
+        <div className="account-panel reservations-panel">
+          <AccountReservations key={session.user.email} />
+        </div>
+      )}
     </main>
   )
 }
