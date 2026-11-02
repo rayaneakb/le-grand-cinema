@@ -89,7 +89,6 @@ class Room
     public function removeSeat(Seat $seat): static
     {
         if ($this->seats->removeElement($seat)) {
-            // set the owning side to null (unless already changed)
             if ($seat->getRoom() === $this) {
                 $seat->setRoom(null);
             }
@@ -119,7 +118,6 @@ class Room
     public function removeScreening(Screening $screening): static
     {
         if ($this->screenings->removeElement($screening)) {
-            // set the owning side to null (unless already changed)
             if ($screening->getRoom() === $this) {
                 $screening->setRoom(null);
             }

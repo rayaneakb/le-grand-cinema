@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/vendor
+**/var
+**/dist
+**/.env
+**/.env.*
+**/test-results
+**/playwright-report
+**/.phpunit.cache
+**/coverage
+**/.DS_Store
+frontend/tests
+backend/tests

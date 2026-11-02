@@ -1,0 +1,408 @@
+.site-header nav a {
+  text-decoration: none;
+}
+.site-header nav a[aria-current='page'] {
+  text-decoration-line: underline;
+}
+.site-header nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px 22px;
+}
+.account-page {
+  padding-top: 48px;
+  padding-bottom: 24px;
+}
+.account-panel {
+  max-width: 560px;
+  margin: auto;
+  padding: 32px;
+  border: 1px solid #e7e7e0;
+  border-radius: 12px;
+  background: white;
+}
+.account-panel h1 {
+  margin: 10px 0 16px;
+  font-family: Manrope, Arial, sans-serif;
+  font-size: clamp(26px, 5vw, 34px);
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+.account-panel > p {
+  margin-bottom: 18px;
+}
+.account-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+.form-field {
+  display: grid;
+  gap: 6px;
+}
+.account-form label {
+  font-weight: 600;
+}
+.account-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #acb8b2;
+  border-radius: 6px;
+  color: #202b32;
+  background: white;
+  font: inherit;
+}
+.account-form input:focus-visible {
+  outline: 3px solid #28544c;
+  outline-offset: 2px;
+}
+.account-form input[aria-invalid='true'] {
+  border-color: #a43628;
+}
+.field-help {
+  color: #596761;
+  font-size: 13px;
+}
+.field-error {
+  color: #a43628;
+  font-size: 14px;
+}
+.primary-button {
+  padding: 12px 20px;
+  border: 1px solid #28544c;
+  border-radius: 6px;
+  background: #28544c;
+  color: white;
+  font-weight: 600;
+}
+.primary-button:hover:not(:disabled) {
+  background: #1b4039;
+}
+.primary-button:disabled {
+  opacity: 0.65;
+}
+.account-success,
+.account-warning {
+  padding: 14px;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.account-success {
+  background: #eaf2ec;
+  color: #28544c;
+}
+.account-warning {
+  background: #fff3eb;
+  color: #7b3826;
+}
+.resend-form {
+  border-top: 1px solid #e8e5df;
+  padding-top: 24px;
+}
+.resend-form h2 {
+  font-size: 20px;
+}
+.account-back {
+  display: block;
+  width: fit-content;
+  margin-top: 24px;
+  color: #28544c;
+  text-underline-offset: 4px;
+}
+@media (max-width: 640px) {
+  .account-page {
+    padding-top: 28px;
+  }
+  .account-panel {
+    padding: 22px 18px;
+  }
+  .site-header {
+    flex-wrap: wrap;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+}
+
+.account-details {
+  margin: 24px 0;
+}
+.account-details dt {
+  font-weight: 600;
+  margin-top: 14px;
+}
+.account-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-menu {
+  position: relative;
+}
+.account-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #bccbc3;
+  border-radius: 6px;
+  background: white;
+  color: #28544c;
+  font-size: 14px;
+  font-weight: 700;
+}
+.account-menu-trigger[aria-expanded='true'] {
+  background: #eaf2ec;
+}
+.account-menu-options {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  display: grid;
+  width: 230px;
+  max-width: calc(100vw - 40px);
+  padding: 8px;
+  border: 1px solid #dce0d9;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 8px 24px #202b3214;
+}
+.site-header .account-menu-options a,
+.account-menu-options button {
+  display: block;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #202b32;
+  text-align: left;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.account-menu-options a:hover,
+.account-menu-options button:hover:not(:disabled) {
+  background: #eaf2ec;
+}
+.account-menu-options .field-error {
+  padding: 8px 12px;
+}
+
+.account-reservations {
+  margin-block: 2rem;
+}
+
+.account-reservation {
+  padding-block: 1.25rem;
+  border-bottom: 1px solid #dfe3de;
+  overflow-wrap: anywhere;
+}
+
+.account-reservation h3 {
+  margin: 0 0 0.5rem;
+}
+
+.account-reservation p {
+  margin-block: 0.5rem;
+}
+
+.account-history-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.reservation-pdf {
+  margin-block: 1.5rem;
+}
+
+.admin-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dfe3de;
+}
+
+.profile-page {
+  display: grid;
+  gap: 24px;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.profile-page > .account-panel {
+  width: 100%;
+  max-width: none;
+}
+
+.reservations-panel .account-reservations {
+  margin: 0;
+}
+
+.admin-shell {
+  max-width: 1000px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.admin-navigation,
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block: 24px;
+}
+
+.admin-navigation a {
+  padding: 10px 16px;
+  border: 1px solid #bccbc3;
+  border-radius: 6px;
+  color: #28544c;
+  background: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-navigation a:hover {
+  background: #eaf2ec;
+}
+
+.admin-page .admin-section {
+  padding: 28px;
+  border: 1px solid #dfe3de;
+  border-radius: 12px;
+  background: white;
+}
+
+.admin-section h2 {
+  margin-top: 0;
+  scroll-margin-top: 24px;
+}
+
+.admin-film-list {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-film-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-block: 16px;
+  border-bottom: 1px solid #dfe3de;
+}
+
+.admin-film-item h3 {
+  margin-top: 0;
+}
+
+.admin-film-item .admin-poster {
+  width: 80px;
+  border-radius: 4px;
+}
+
+.modal {
+  width: min(680px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 28px;
+  border: 1px solid #dfe3de;
+  border-radius: 12px;
+  color: #202b32;
+  background: white;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modal::backdrop {
+  background: #162c2699;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.modal-context {
+  padding: 12px;
+  border-radius: 6px;
+  background: #eaf2ec;
+}
+
+.modal .account-form {
+  margin-top: 20px;
+}
+
+.modal textarea {
+  width: 100%;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.account-history-pages button:not(.primary-button) {
+  padding: 10px 16px;
+  border: 1px solid #99aaa4;
+  border-radius: 6px;
+  color: #28544c;
+  background: white;
+}
+
+@media (max-width: 640px) {
+  .admin-page .admin-section {
+    padding: 20px 16px;
+  }
+
+  .modal {
+    padding: 20px 16px;
+  }
+
+  .admin-film-item {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-film-item .admin-poster {
+    width: 60px;
+  }
+}
+
+.admin-section > p,
+.admin-film-item p {
+  margin-block: 12px;
+}
+
+.admin-section > .secondary-button {
+  margin-block: 8px 16px;
+}
+
+.modal-header {
+  position: sticky;
+  top: -28px;
+  z-index: 1;
+  padding-block: 12px;
+  background: white;
+}
+
+@media (max-width: 640px) {
+  .modal-header {
+    top: -20px;
+  }
+}
+
+.film-fields select {
+  width: 100%;
+  min-width: 0;
+}
